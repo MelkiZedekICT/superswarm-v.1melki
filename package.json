@@ -1,15 +1,15 @@
 {
 	"name": "@os-eco/overstory-cli",
 	"version": "0.11.0",
-	"description": "Multi-agent orchestration for AI coding agents — spawn workers in git worktrees via tmux, coordinate through SQLite mail, merge with tiered conflict resolution. Pluggable runtime adapters for Claude Code, Pi, and more.",
+	"description": "Superswarm — multi-agent coding orchestration based on Overstory by Jaymin West.",
 	"author": "Jaymin West",
 	"license": "MIT",
 	"type": "module",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/jayminwest/overstory.git"
+		"url": "https://github.com/MelkiZedekICT/superswarm-v.1melki.git"
 	},
-	"homepage": "https://github.com/jayminwest/overstory",
+	"homepage": "https://github.com/MelkiZedekICT/superswarm-v.1melki",
 	"keywords": [
 		"ai",
 		"agents",
@@ -21,6 +21,7 @@
 		"developer-tools"
 	],
 	"bin": {
+		"superswarm": "./src/index.ts",
 		"overstory": "./src/index.ts",
 		"ov": "./src/index.ts"
 	},

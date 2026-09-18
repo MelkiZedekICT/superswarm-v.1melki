@@ -14,7 +14,7 @@ export const TOOL_BRAND = {
 	seeds: { rgb: [124, 179, 66] as const, label: "seeds" },
 	sapling: { rgb: [76, 175, 80] as const, label: "sapling" },
 	canopy: { rgb: [56, 142, 60] as const, label: "canopy" },
-	overstory: { rgb: [46, 125, 50] as const, label: "overstory" },
+	overstory: { rgb: [46, 125, 50] as const, label: "Superswarm" },
 	greenhouse: { rgb: [124, 179, 66] as const, label: "greenhouse" },
 } as const;
 

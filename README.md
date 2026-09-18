@@ -1,4 +1,15 @@
-# Overstory
+# Superswarm
+
+Superswarm is MelkiZedekICT's application based on Overstory by Jaymin West.
+The original interface and workflows are retained while local-model support is
+prepared. Build verification and local-model integration are still pending.
+
+Project: https://github.com/MelkiZedekICT/superswarm-v.1melki
+
+The original MIT license and attribution are preserved. The upstream package
+identity, `ov`/`overstory` commands, and `.overstory` configuration remain for
+compatibility; `superswarm` is also available as a command when linked/installed
+from this checkout. The documentation below describes the upstream baseline.
 
 Multi-agent orchestration for AI coding agents.
 
@@ -6,7 +17,7 @@ Multi-agent orchestration for AI coding agents.
 [![CI](https://github.com/jayminwest/overstory/actions/workflows/ci.yml/badge.svg)](https://github.com/jayminwest/overstory/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **No longer maintained.** Overstory is no longer actively maintained and this repository is **archived (read-only)** — I am not reviewing issues or merging pull requests here anymore. Thank you to everyone who contributed. The code stays MIT-licensed, so feel free to fork and carry it forward. Active development has moved to **[Warren](https://github.com/jayminwest/warren)**, a self-hostable control plane for sandboxed cloud agents and overstory's spiritual successor — start there for anything new.
+> **Upstream status:** The original Overstory repository is archived. Its author moved development to [Warren](https://github.com/jayminwest/warren). This notice describes upstream, not the Superswarm repository.
 
 Overstory turns a single coding session into a multi-agent team by spawning worker agents in isolated git worktrees, coordinating them through a custom SQLite mail system, and merging their work back with tiered conflict resolution. New projects spawn Claude agents headless and surface them through a web UI (`ov serve`); `tmux attach` is the opt-in escape hatch for live steering. A pluggable `AgentRuntime` interface lets you swap between 11 runtimes — Claude Code, [Pi](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent), [Gemini CLI](https://github.com/google-gemini/gemini-cli), [Aider](https://aider.chat), [Goose](https://github.com/block/goose), [Amp](https://amp.dev), or your own adapter.
 

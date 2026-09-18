@@ -149,7 +149,7 @@ let timingStart: number | undefined;
 
 program
 	.name("ov")
-	.description("Multi-agent orchestration for Claude Code")
+	.description("Superswarm — multi-agent coding orchestration")
 	.version(VERSION, "-v, --version", "Print version")
 	.enablePositionalOptions()
 	.option("-q, --quiet", "Suppress non-error output")
@@ -167,7 +167,7 @@ program
 			const COL_WIDTH = 20;
 			const lines: string[] = [];
 
-			lines.push(`${brand.bold("overstory")} ${muted(`v${VERSION}`)} — Multi-agent orchestration`);
+			lines.push(`${brand.bold("Superswarm")} ${muted(`v${VERSION}`)} — Multi-agent orchestration`);
 			lines.push("");
 
 			lines.push(`Usage: ${chalk.dim("ov")} <command> [options]`);

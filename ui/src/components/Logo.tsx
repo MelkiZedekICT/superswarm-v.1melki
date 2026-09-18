@@ -63,7 +63,7 @@ export function Logo({ size = "sm", showWordmark = false, tool, className }: Log
 				})}
 			</svg>
 			{showWordmark ? (
-				<span className="font-semibold text-sm tracking-tight text-foreground">overstory</span>
+				<span className="font-semibold text-sm tracking-tight text-foreground">Superswarm</span>
 			) : null}
 		</span>
 	);

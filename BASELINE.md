@@ -1,4 +1,4 @@
-# SuperSwarm baseline
+# Superswarm baseline
 
 This repository starts from the complete, unmodified Overstory application by
 Jaymin West. The original MIT license and attribution are retained in LICENSE.
@@ -10,8 +10,9 @@ Jaymin West. The original MIT license and attribution are retained in LICENSE.
 
 ## Current status
 
-The upstream source and Git history have been imported. Application code,
-interface, runtime adapters, and model defaults have not been customized.
+The upstream source and Git history have been imported. The application is
+branded Superswarm with an additional `superswarm` command alias. Runtime
+adapters, model defaults, and orchestration behavior have not been customized.
 Build and test verification are still pending. This is a source baseline, not
 a verified release. No local models have been installed or connected.
 
