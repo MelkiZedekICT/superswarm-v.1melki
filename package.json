@@ -49,7 +49,7 @@
 	},
 	"dependencies": {
 		"@os-eco/mulch-cli": "^0.6.2",
-		"chalk": "^5.6.2",
+		"chalk": "^6.0.0",
 		"commander": "^14.0.3"
 	},
 	"devDependencies": {
