@@ -13,6 +13,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { isPersistentCapability } from "../agents/capabilities.ts";
 import {
@@ -133,13 +134,13 @@ export function resolveUiDistPath(
 ): string {
 	const projectDist = join(projectRoot, "ui", "dist");
 	if (_exists(projectDist)) return projectDist;
-	return new URL("../../ui/dist", import.meta.url).pathname;
+	return fileURLToPath(new URL("../../ui/dist", import.meta.url));
 }
 
 /** Read the package version once at module load to avoid circular imports with index.ts. */
 const _pkgVersion = (): string => {
 	try {
-		const raw = readFileSync(new URL("../../package.json", import.meta.url).pathname, "utf-8");
+		const raw = readFileSync(new URL("../../package.json", import.meta.url), "utf-8");
 		return (JSON.parse(raw) as { version: string }).version;
 	} catch {
 		return "unknown";

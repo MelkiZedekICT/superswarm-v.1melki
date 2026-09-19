@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createMailClient } from "../mail/client.ts";
 import { createMailStore } from "../mail/store.ts";
 import type { DevServerHandle } from "./serve/dev.ts";
@@ -191,7 +192,7 @@ describe("createServeServer", () => {
 		const resolved = resolveUiDistPath(tempDir);
 		expect(resolved).not.toBe(join(tempDir, "ui", "dist"));
 		// Resolves to the dev repo's own ui/dist (or wherever the package lives).
-		expect(resolved.endsWith("/ui/dist")).toBe(true);
+		expect(resolved).toBe(fileURLToPath(new URL("../../ui/dist", import.meta.url)));
 	});
 
 	test("static files: falls back to package-bundled ui/dist when project has no ui/", async () => {

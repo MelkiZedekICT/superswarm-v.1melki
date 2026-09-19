@@ -1,4 +1,4 @@
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { ConfigError, ValidationError } from "./errors.ts";
 import type {
 	CoordinatorExitTriggers,
@@ -939,7 +939,7 @@ export async function resolveProjectRoot(startDir: string): Promise<string> {
 	// if startDir contains /.overstory/worktrees/ as a path segment, the
 	// substring before it is the project root — verify with config.yaml.
 	const WT_SEGMENT = `/${OVERSTORY_DIR}/worktrees/`;
-	const idx = startDir.indexOf(WT_SEGMENT);
+	const idx = startDir.split(sep).join("/").indexOf(WT_SEGMENT);
 	if (idx > 0) {
 		const parentRoot = startDir.slice(0, idx);
 		if (existsSync(join(parentRoot, OVERSTORY_DIR, CONFIG_FILENAME))) {

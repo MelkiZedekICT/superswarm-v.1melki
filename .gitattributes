@@ -1,3 +1,6 @@
+# Match Biome's LF formatting on Windows and Linux.
+* text=auto eol=lf
+
 .mulch/expertise/*.jsonl merge=union
 
 .seeds/issues.jsonl merge=union

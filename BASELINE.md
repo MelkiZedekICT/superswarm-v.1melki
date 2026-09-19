@@ -13,8 +13,11 @@ Jaymin West. The original MIT license and attribution are retained in LICENSE.
 The upstream source and Git history have been imported. The application is
 branded Superswarm with an additional `superswarm` command alias. Runtime
 adapters, model defaults, and orchestration behavior have not been customized.
-Build and test verification are still pending. This is a source baseline, not
-a verified release. No local models have been installed or connected.
+The interface build, TypeScript check, lint, and core HTTP server checks pass on
+Windows. Broader tests stop on locked database files during cleanup. See
+[BUILD_STATUS.md](BUILD_STATUS.md) for evidence and [PROJECT.md](PROJECT.md) for
+the agreed scope. This is not a verified release. No local models have been
+installed or connected.
 
 The next step is to build and validate the existing application on Ubuntu,
 then integrate two or three local models. The eventual product must run
