@@ -5,6 +5,7 @@ import { CodexRuntime } from "./codex.ts";
 import { CopilotRuntime } from "./copilot.ts";
 import { CursorRuntime } from "./cursor.ts";
 import { GeminiRuntime } from "./gemini.ts";
+import { LocalRuntime } from "./local.ts";
 import { OpenCodeRuntime } from "./opencode.ts";
 import { PiRuntime } from "./pi.ts";
 import { getRuntime } from "./registry.ts";
@@ -24,7 +25,17 @@ describe("getRuntime", () => {
 
 	it("throws with a helpful message for an unknown runtime", () => {
 		expect(() => getRuntime("unknown-runtime")).toThrow(
-			'Unknown runtime: "unknown-runtime". Available: aider, amp, claude, codex, copilot, cursor, gemini, goose, opencode, pi, sapling',
+			'Unknown runtime: "unknown-runtime". Available: local, aider, amp, claude, codex, copilot, cursor, gemini, goose, opencode, pi, sapling',
+		);
+	});
+
+	it("resolves the local runtime and blocks capability overrides", () => {
+		const config = {
+			runtime: { default: "local", capabilities: { reviewer: "claude" } },
+		} as unknown as OverstoryConfig;
+		expect(getRuntime(undefined, config)).toBeInstanceOf(LocalRuntime);
+		expect(() => getRuntime(undefined, config, "reviewer")).toThrow(
+			"Superswarm local mode prohibits remote runtime overrides",
 		);
 	});
 

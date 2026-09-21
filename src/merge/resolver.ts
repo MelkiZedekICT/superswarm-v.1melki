@@ -365,7 +365,10 @@ async function tryAiResolve(
 			].join(" ");
 
 			const runtime = getRuntime(config?.runtime?.printCommand ?? config?.runtime?.default, config);
-			const argv = runtime.buildPrintCommand(prompt);
+			const argv = runtime.buildPrintCommand(
+				prompt,
+				config?.models?.merger ?? config?.models?.builder,
+			);
 			const proc = Bun.spawn(argv, {
 				cwd: repoRoot,
 				stdout: "pipe",
@@ -451,7 +454,10 @@ async function tryReimagine(
 			].join("");
 
 			const runtime = getRuntime(config?.runtime?.printCommand ?? config?.runtime?.default, config);
-			const argv = runtime.buildPrintCommand(prompt);
+			const argv = runtime.buildPrintCommand(
+				prompt,
+				config?.models?.merger ?? config?.models?.builder,
+			);
 			const proc = Bun.spawn(argv, {
 				cwd: repoRoot,
 				stdout: "pipe",

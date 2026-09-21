@@ -158,7 +158,10 @@ async function spawnClaude(
 	const timeout = timeoutMs ?? DEFAULT_TRIAGE_TIMEOUT_MS;
 
 	const runtime = getRuntime(config?.runtime?.printCommand ?? config?.runtime?.default, config);
-	const argv = runtime.buildPrintCommand(prompt);
+	const argv = runtime.buildPrintCommand(
+		prompt,
+		config?.models?.monitor ?? config?.models?.reviewer,
+	);
 	const proc = Bun.spawn(argv, {
 		stdout: "pipe",
 		stderr: "pipe",

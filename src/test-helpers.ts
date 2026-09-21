@@ -12,6 +12,9 @@ const GIT_TEST_ENV = {
 	GIT_AUTHOR_EMAIL: "test@overstory.dev",
 	GIT_COMMITTER_NAME: "Overstory Test",
 	GIT_COMMITTER_EMAIL: "test@overstory.dev",
+	GIT_CONFIG_COUNT: "1",
+	GIT_CONFIG_KEY_0: "core.autocrlf",
+	GIT_CONFIG_VALUE_0: "false",
 };
 
 /** Cached template repo path. Created lazily on first call. */
@@ -47,7 +50,7 @@ export async function createTempGitRepo(): Promise<string> {
 	const template = await getTemplateRepo();
 	const dir = await mkdtemp(join(tmpdir(), "overstory-test-"));
 	// Clone into the empty dir. Avoid --local (hardlinks trigger EFAULT in Bun's rm).
-	await runGitInDir(".", ["clone", template, dir]);
+	await runGitInDir(".", ["clone", "--config", "core.autocrlf=false", template, dir]);
 	// Set git identity at repo level so code that doesn't use GIT_TEST_ENV
 	// (e.g., resolver's runGit) can still commit. Locally this is covered by
 	// ~/.gitconfig, but CI runners have no global git identity.

@@ -126,7 +126,7 @@ export async function acquireTurnLock(opts: AcquireTurnLockOpts): Promise<TurnLo
 
 	const tearDown = (): void => {
 		try {
-			db.close();
+			db.close(true);
 		} catch {
 			// best-effort
 		}
@@ -198,7 +198,7 @@ export async function acquireTurnLock(opts: AcquireTurnLockOpts): Promise<TurnLo
 				// best-effort: SQL failure must not block in-process release.
 			}
 			try {
-				db.close();
+				db.close(true);
 			} catch {
 				// best-effort
 			}
@@ -225,7 +225,7 @@ export function readTurnLock(
 			acquiredAt: row?.acquired_at ?? null,
 		};
 	} finally {
-		db.close();
+		db.close(true);
 	}
 }
 

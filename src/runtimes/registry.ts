@@ -10,6 +10,7 @@ import { CopilotRuntime } from "./copilot.ts";
 import { CursorRuntime } from "./cursor.ts";
 import { GeminiRuntime } from "./gemini.ts";
 import { GooseRuntime } from "./goose.ts";
+import { LocalRuntime } from "./local.ts";
 import { OpenCodeRuntime } from "./opencode.ts";
 import { PiRuntime } from "./pi.ts";
 import { SaplingRuntime } from "./sapling.ts";
@@ -17,6 +18,7 @@ import type { AgentRuntime } from "./types.ts";
 
 /** Registry of config-independent runtime adapters (name → factory). */
 const runtimes = new Map<string, () => AgentRuntime>([
+	["local", () => new LocalRuntime()],
 	["aider", () => new AiderRuntime()],
 	["amp", () => new AmpRuntime()],
 	["claude", () => new ClaudeRuntime()],
@@ -41,6 +43,7 @@ const runtimes = new Map<string, () => AgentRuntime>([
  */
 export function getAllRuntimes(): AgentRuntime[] {
 	return [
+		new LocalRuntime(),
 		new AiderRuntime(),
 		new AmpRuntime(),
 		new ClaudeRuntime(),
@@ -83,6 +86,11 @@ export function getRuntime(
 			? config.runtime.capabilities[capability]
 			: undefined;
 	const runtimeName = name ?? capabilityRuntime ?? config?.runtime?.default ?? "claude";
+	if (config?.runtime?.default === "local" && runtimeName !== "local") {
+		throw new Error(
+			"Superswarm local mode prohibits remote runtime overrides, including helper calls.",
+		);
+	}
 
 	// Pi runtime needs config for model alias expansion.
 	if (runtimeName === "pi") {

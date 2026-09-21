@@ -419,7 +419,7 @@ export function createMailStore(dbPath: string): MailStore {
 			} catch {
 				// Best effort — checkpoint failure is non-fatal
 			}
-			db.close();
+			db.close(true);
 		},
 	};
 }

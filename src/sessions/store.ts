@@ -691,7 +691,7 @@ export function createSessionStore(dbPath: string): SessionStore {
 			} catch {
 				// Best effort -- checkpoint failure is non-fatal
 			}
-			db.close();
+			db.close(true);
 		},
 	};
 }
@@ -852,7 +852,7 @@ export function createRunStore(dbPath: string): RunStore {
 			} catch {
 				// Best effort -- checkpoint failure is non-fatal
 			}
-			db.close();
+			db.close(true);
 		},
 	};
 }

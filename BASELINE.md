@@ -11,18 +11,19 @@ Jaymin West. The original MIT license and attribution are retained in LICENSE.
 ## Current status
 
 The upstream source and Git history have been imported. The application is
-branded Superswarm with an additional `superswarm` command alias. Runtime
-adapters, model defaults, and orchestration behavior have not been customized.
-The interface build, TypeScript check, lint, and core HTTP server checks pass on
-Windows. Broader tests stop on locked database files during cleanup. See
+branded Superswarm with an additional `superswarm` command alias. A local Ollama
+runtime, fail-closed routing, model qualification, and sequential inference
+scheduling are now implemented. The interface build, TypeScript check, lint,
+focused local/runtime tests, and a live console/API smoke test pass on Windows. See
 [BUILD_STATUS.md](BUILD_STATUS.md) for evidence and [PROJECT.md](PROJECT.md) for
-the agreed scope. This is not a verified release. No local models have been
-installed or connected.
+the agreed scope. This remains an alpha: the 1.5B model passed the edit-and-test
+prerequisite but failed a real worktree task, so no installed model is approved
+for autonomous builder work.
 
-The next step is to build and validate the existing application on Ubuntu,
-then integrate two or three local models. The eventual product must run
-inference locally without paid model APIs. Upstream cloud defaults are still
-present and must be replaced before claiming local-only operation.
+The next step is to qualify two or three suitably small local models and validate
+the installer and full workflow on native Ubuntu. Imported cloud adapters remain
+in source for compatibility, while a project initialized by Superswarm defaults
+to local routing and rejects remote role/helper overrides.
 
 ## Continue on Ubuntu
 

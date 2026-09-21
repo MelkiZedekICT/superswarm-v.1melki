@@ -814,7 +814,7 @@ function validateConfig(config: OverstoryConfig): void {
 	const validAliases = ["sonnet", "opus", "haiku"];
 	const toolHeavyRoles = ["builder", "scout"];
 	const defaultRuntime = config.runtime?.default ?? "claude";
-	const allowBareModelRefs = defaultRuntime === "codex";
+	const allowBareModelRefs = defaultRuntime === "codex" || defaultRuntime === "local";
 	for (const [role, model] of Object.entries(config.models)) {
 		if (model === undefined) continue;
 		if (model.includes("/")) {

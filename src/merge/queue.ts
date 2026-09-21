@@ -240,7 +240,7 @@ export function createMergeQueue(dbPath: string): MergeQueue {
 
 		close(): void {
 			db.exec("PRAGMA wal_checkpoint(PASSIVE)");
-			db.close();
+			db.close(true);
 		},
 	};
 }

@@ -1,8 +1,9 @@
 # Superswarm
 
 Superswarm is MelkiZedekICT's application based on Overstory by Jaymin West.
-The original interface and workflows are retained while local-model support is
-prepared. Build verification and local-model integration are still pending.
+The original interface and workflows are retained. Superswarm adds a fail-closed
+local Ollama runtime, sequential inference scheduling for small computers, and
+model qualification before role assignment.
 
 Project: https://github.com/MelkiZedekICT/superswarm-v.1melki
 
@@ -13,8 +14,6 @@ from this checkout. The documentation below describes the upstream baseline.
 
 Multi-agent orchestration for AI coding agents.
 
-[![npm](https://img.shields.io/npm/v/@os-eco/overstory-cli)](https://www.npmjs.com/package/@os-eco/overstory-cli)
-[![CI](https://github.com/jayminwest/overstory/actions/workflows/ci.yml/badge.svg)](https://github.com/jayminwest/overstory/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **Upstream status:** The original Overstory repository is archived. Its author moved development to [Warren](https://github.com/jayminwest/warren). This notice describes upstream, not the Superswarm repository.
@@ -23,9 +22,38 @@ Overstory turns a single coding session into a multi-agent team by spawning work
 
 > **Warning: Agent swarms are not a universal solution.** Do not deploy Overstory without understanding the risks of multi-agent orchestration — compounding error rates, cost amplification, debugging complexity, and merge conflicts are the normal case, not edge cases. Read [STEELMAN.md](STEELMAN.md) for a full risk analysis and the [Agentic Engineering Book](https://github.com/jayminwest/agentic-engineering-book) ([web version](https://jayminwest.com/agentic-engineering-book)) before using this tool in production.
 
-## Install
+## Install Superswarm
 
-Requires [Bun](https://bun.sh) v1.0+ and git. `tmux` is optional — only needed if you want to spawn workers with `--no-headless` or attach to a coordinator/worker pane directly. At least one supported agent runtime must be installed:
+Superswarm requires Git, Bun 1.4+, and Ollama. Clone this repository and run the
+platform installer in [INSTALL.md](INSTALL.md). The installer builds the console
+and links the `superswarm` and `ov` commands; it does not download or delete models.
+
+```sh
+git clone https://github.com/MelkiZedekICT/superswarm-v.1melki.git
+cd superswarm-v.1melki
+# Windows: powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+# Ubuntu:  ./scripts/install.sh
+```
+
+In the Git repository you want Superswarm to work on:
+
+```sh
+superswarm init --yes
+superswarm local status
+superswarm local qualify --model YOUR_INSTALLED_MODEL
+superswarm local configure --model YOUR_INSTALLED_MODEL
+superswarm serve
+```
+
+Open <http://127.0.0.1:7321>. Configuration refuses unqualified model digests
+and local-mode projects reject cloud runtime overrides. See
+[RESEARCH_GAPS.md](RESEARCH_GAPS.md) for what “qualified” means and current limits.
+
+## Upstream compatibility
+
+The imported code retains the original runtime adapters for compatibility. They
+are not part of Superswarm's local-only supported path. Most are explicitly
+experimental in upstream 0.11.0:
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude` CLI)
 - [Pi](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent) (`pi` CLI)
@@ -39,22 +67,12 @@ Requires [Bun](https://bun.sh) v1.0+ and git. `tmux` is optional — only needed
 - [Goose](https://github.com/block/goose) (`goose` CLI)
 - [Amp](https://amp.dev) (`amp` CLI)
 
-```bash
-bun install -g @os-eco/overstory-cli
-```
-
-Or try without installing:
-
-```bash
-npx @os-eco/overstory-cli --help
-```
-
 ### Development
 
 ```bash
-git clone https://github.com/jayminwest/overstory.git
-cd overstory
-bun install
+git clone https://github.com/MelkiZedekICT/superswarm-v.1melki.git
+cd superswarm-v.1melki
+bun install --frozen-lockfile
 bun link              # Makes 'ov' available globally
 
 bun test              # Run all tests
@@ -62,7 +80,7 @@ bun run lint          # Biome check
 bun run typecheck     # tsc --noEmit
 ```
 
-## Quick Start
+## Original Overstory workflow
 
 ```bash
 # Initialize overstory in your project

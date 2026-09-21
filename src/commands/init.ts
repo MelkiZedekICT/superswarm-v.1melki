@@ -705,6 +705,8 @@ export async function writeOverstoryReadme(overstoryPath: string): Promise<void>
 }
 
 export interface InitOptions {
+	/** Superswarm local-only defaults; public CLI enables this automatically. */
+	local?: boolean;
 	yes?: boolean;
 	name?: string;
 	force?: boolean;
@@ -778,6 +780,7 @@ export async function initCommand(opts: InitOptions): Promise<void> {
 	} catch {
 		// Non-fatal: fall back to claude if runtime detection fails
 	}
+	if (opts.local) defaultRuntime = "local";
 
 	process.stdout.write(`Initializing overstory for "${projectName}"...\n\n`);
 
@@ -820,6 +823,12 @@ export async function initCommand(opts: InitOptions): Promise<void> {
 		// primary operator surface and tmux is opt-in via `--no-headless`. Existing
 		// projects keep tmux until they edit their config (overstory-caec).
 		config.runtime.claudeHeadlessByDefault = true;
+	}
+	if (opts.local) {
+		config.agents.maxConcurrent = 3;
+		config.agents.maxAgentsPerLead = 2;
+		config.agents.maxSessionsPerRun = 12;
+		config.runtime = { ...config.runtime, default: "local", printCommand: "local" };
 	}
 
 	const configYaml = serializeConfigToYaml(config);
@@ -959,7 +968,7 @@ export async function initCommand(opts: InitOptions): Promise<void> {
 	}
 
 	printSuccess("Initialized");
-	printHint("Next: run `ov hooks install` to enable Claude Code hooks.");
+	if (!opts.local) printHint("Next: run `ov hooks install` to enable Claude Code hooks.");
 	printHint("Then: `ov coordinator start` and `ov serve` — open http://localhost:7321");
 	printHint(
 		"       (UI is the primary operator surface; pass `--no-headless` to ov sling for tmux attach)",

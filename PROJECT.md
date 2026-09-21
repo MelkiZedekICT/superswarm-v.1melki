@@ -1,6 +1,6 @@
 # Superswarm: project direction and build notes
 
-Updated: 19 September 2026.
+Updated: 21 September 2026.
 
 ## What we are building
 
@@ -42,9 +42,9 @@ rejected. Do not revive that architecture without a new instruction from the own
 3. The current adapters are not equally complete. The imported Pi adapter is
    experimental, and OpenCode contains stubs. Validate the chosen runtime before
    promising parity. A runtime listed in the registry is not a tested integration.
-4. Upstream defaults still select cloud-backed runtimes/models. They have not yet
-   been replaced. Never claim this baseline is already local-only, and do not run
-   paid/cloud-backed agents just to demonstrate the baseline.
+4. The imported defaults selected cloud-backed runtimes/models. Superswarm's init
+   path now selects the local runtime and rejects cloud role overrides. Imported
+   adapters remain available only to older Overstory configurations.
 5. Local-only routing must cover coordinators, workers, reviewers, merge helpers,
    and recovery calls. Adding local builder models alone is insufficient.
 6. Agent roles can share one loaded model with separate state. Two or three model
@@ -67,6 +67,10 @@ Sources consulted/rechecked on 19 September 2026:
 The first two sources were refreshed for this build session. The remaining sources
 were inspected during the preceding research session. The original detailed report
 is in the parent workspace's research folder; this file is the portable project note.
+
+The repository-focused gap audit is in [RESEARCH_GAPS.md](RESEARCH_GAPS.md). Its
+main finding is that local-first orchestration needs inference-resource scheduling,
+model qualification, and fail-closed routing in addition to a local provider URL.
 
 ## Build sequence
 
@@ -102,8 +106,14 @@ is in the parent workspace's research folder; this file is the portable project 
 - Bun 1.4.2 is available locally in the Windows workspace tools folder.
 - The previously registered Ubuntu WSL installation could not start because its
   virtual disk was missing. This does not establish a problem with native Ubuntu.
-- No local model has been connected or evaluated yet.
-- Build/test results for the current session will be recorded in BUILD_STATUS.md.
+- Ollama 0.34.2 and three installed models were discovered locally. The small
+  `qwen2.5:1.5b` model passed an exact edit-and-test prerequisite but failed a real
+  worktree task: it made no scoped changes, invented Maven checks, and omitted
+  terminal mail. The 9.7B candidate did not load within one minute. Neither is
+  approved for an autonomous role.
+- Local routing, serialized inference, tool guards, qualification, installers,
+  and the live console/API smoke test are implemented. Detailed evidence and the
+  remaining release boundary are recorded in BUILD_STATUS.md.
 
 ## Manual coding and learning priorities
 

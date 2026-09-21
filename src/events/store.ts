@@ -363,7 +363,7 @@ export function createEventStore(dbPath: string): EventStore {
 			} catch {
 				// Best effort -- checkpoint failure is non-fatal
 			}
-			db.close();
+			db.close(true);
 		},
 	};
 }

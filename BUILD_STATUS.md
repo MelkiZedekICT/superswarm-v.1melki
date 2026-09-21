@@ -1,67 +1,74 @@
 # Superswarm build status
 
-Verified on 19 September 2026, Windows, Bun 1.4.2.
+Verified on 21 September 2026 on Windows with Bun 1.4.2, Ollama 0.34.2,
+about 8 GB system RAM, and an RTX 2050 with 4 GB VRAM.
 
 ## Completed
 
-- Installed locked backend and UI dependencies.
-- Built the original React console successfully (`bun run build` in `ui`).
-- Backend TypeScript check passed (`bun run typecheck`).
-- Biome passed: 347 files checked (`bun run lint`).
-- CLI help runs and displays Superswarm.
-- Fixed worktree root discovery with native Windows path separators. The existing
-  regression case passed on the subsequent upstream test run.
-- Fixed package asset resolution with `fileURLToPath` and version loading with a
-  file URL, preserving Windows drive letters and decoding escaped path characters.
-- Server tests verified health responses, route registration, static files, SPA
-  fallback, and serving the package-built console from a different project.
+- Built the original Overstory React console with Superswarm branding. The
+  production bundle and the live `/api/health`, runs, agents, and coordinator
+  endpoints were served successfully from a disposable initialized project.
+- Added a local-only Ollama runtime backed by the pinned Pi coding-agent SDK.
+  The runtime fixes inference to `127.0.0.1:11434`, rejects redirects, cloud
+  model tags, credentials, and per-role runtime overrides.
+- Added a machine-wide inference lease. Separate agents keep their own worktree,
+  mailbox, and session, while only one local model response consumes the GPU at
+  a time. The lease is released while agents run tools.
+- Added role and path guards for local tools. Writes stay inside the real
+  worktree, orchestration metadata is protected, and review roles are read-only.
+- Added `superswarm local status`, `test`, `qualify`, and `configure`. A model's
+  exact installed digest must pass the scoped-edit fixture before configuration,
+  and the worker checks that qualification again at execution time.
+- Changed `superswarm init` to create a fail-closed local configuration with
+  conservative agent limits. Legacy cloud aliases no longer silently select a
+  model in local mode.
+- Fixed Windows path handling, file URL conversion, SQLite close behavior, and
+  failed-server cleanup found while validating the upstream application.
+- Added Windows and POSIX installers, locked direct runtime dependencies, and
+  retained the original MIT license and attribution.
 
 ## Design fidelity
 
-Compared `ui/` against imported upstream commit
-`ff38f3f76f084abcc34f519bcaa69580f6e53cf1`. Only three files differ:
-`ui/index.html`, `ui/src/components/Logo.tsx`, and `ui/src/lib/brand.ts`.
-All changes are Superswarm branding. Layout, styles, navigation, and controls
-remain upstream's implementation. This source comparison is not a completed
-interactive visual review.
+Compared `ui/` with imported upstream commit
+`ff38f3f76f084abcc34f519bcaa69580f6e53cf1`. Only `ui/index.html`,
+`ui/src/components/Logo.tsx`, and `ui/src/lib/brand.ts` differ, and those changes
+rename the product to Superswarm. Layout, styles, navigation, and controls remain
+the upstream Overstory implementation. Source comparison and a live asset/API
+smoke test passed; an interactive screenshot review could not run because this
+Codex host could not initialize its browser automation assets.
 
-## Test limitations
+## Verification evidence
 
-`bun test --bail` ran 281 tests across 11 files before stopping at Windows
-`EBUSY` during temporary-directory cleanup in `headless-mail-injector.test.ts`.
-The failing case leaves a database file locked. The full suite has not passed.
+- Production console build: passed.
+- Backend TypeScript check and Biome check: passed after the final qualification
+  and compact-prompt changes.
+- Focused local runtime, registry, worktree, mail, server, watchdog, and merge
+  suites: 203 tests passed with 0 failures.
+- Full upstream run: 486 tests across 13 files passed before the Windows sandbox
+  could not resolve `sh` for the Unix hook-deployer suite. The previous SQLite
+  `EBUSY` cleanup failures are fixed. Native Ubuntu remains in the release matrix.
+- `qwen2.5:1.5b` passed a multi-turn exact edit-and-Bun-test prerequisite. In a
+  real worktree run it read the spec but made no scoped edit, invented Maven
+  checks, claimed an unmade commit, and omitted terminal mail. The runner surfaced
+  the contract failure instead of accepting the claim. The model is not approved.
+- The installed 9.7B `qwen3.5` candidate did not become ready within one minute
+  on this hardware and was stopped. It is not qualified.
 
-The focused `serve.test.ts` run passed its first 16 cases, including packaged
-asset serving, then stopped at another `EBUSY` cleanup error in the dev-server
-wiring tests. Test cleanup ownership and native Ubuntu verification remain work.
-Do not interpret these partial runs as an all-tests-pass result.
+## Current release boundary
 
-## Reproduce
+The source application is installable and its local-only boundary is implemented,
+but the autonomous swarm is not a production release until at least one coding
+model passes qualification and a complete builder/reviewer workflow on supported
+hardware. Superswarm deliberately refuses to substitute an unqualified model.
 
-```sh
-bun install --frozen-lockfile
-cd ui
-bun install --frozen-lockfile
-bun run build
-cd ..
-bun run typecheck
-bun run lint
-bun test --bail
-bun src/index.ts --help
-```
+The remaining release work is:
 
-The repository now enforces LF text checkout on Windows and Linux so the
-formatter sees the same line endings on both systems.
+1. Qualify a stronger small tool-capable Ollama model on this machine. The attempted
+   replacement download was blocked by the registry certificate dates.
+2. Demonstrate a real agent edit, test, review, session resume, cancellation, and
+   merge in a disposable repository.
+3. Run the full suite and installer on native Ubuntu, then publish the alpha
+   package and checksums.
 
-## Next build work
-
-1. Resolve database cleanup failures and verify the baseline on native Ubuntu.
-2. Initialize a disposable target repository and inspect the live console,
-   messaging, worktrees, and review workflow without cloud model calls.
-3. Integrate two or three measured local model profiles, sequential by default
-   on limited hardware, with every inference route local and no remote fallback.
-4. Demonstrate real agent edits, tests, review, and cancellation before releasing.
-
-No local models are installed or connected. Upstream cloud defaults remain;
-this checkpoint must not be presented as the completed local-only application.
-See [PROJECT.md](PROJECT.md) for requirements, research sources, and learning priorities.
+See [RESEARCH_GAPS.md](RESEARCH_GAPS.md) for the architecture audit and
+[INSTALL.md](INSTALL.md) for the local installation workflow.

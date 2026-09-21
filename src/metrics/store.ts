@@ -495,7 +495,7 @@ export function createMetricsStore(dbPath: string): MetricsStore {
 		},
 
 		close(): void {
-			db.close();
+			db.close(true);
 		},
 	};
 }

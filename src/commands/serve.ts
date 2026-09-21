@@ -529,17 +529,30 @@ export async function runServe(opts: ServeOptions, deps: ServeDeps = {}): Promis
 		manifest ? { config, manifest } : undefined,
 	);
 
-	const server = await createServeServer(opts, deps);
-
+	let server: Awaited<ReturnType<typeof createServeServer>>;
+	try {
+		server = await createServeServer(opts, deps);
+	} catch (error) {
+		stopMailInjectors();
+		stopBroadcaster();
+		throw error;
+	}
 	let dev: DevServerHandle | undefined;
-	if (opts.dev) {
-		const _startDev = deps._startDevServer ?? startDevServer;
-		dev = await _startDev({
-			uiDir,
-			port: opts.devPort ?? 3000,
-			apiPort: server.port,
-			apiHost: server.hostname,
-		});
+	try {
+		if (opts.dev) {
+			const _startDev = deps._startDevServer ?? startDevServer;
+			dev = await _startDev({
+				uiDir,
+				port: opts.devPort ?? 3000,
+				apiPort: server.port,
+				apiHost: server.hostname,
+			});
+		}
+	} catch (error) {
+		stopMailInjectors();
+		stopBroadcaster();
+		server.stop(true);
+		throw error;
 	}
 
 	const useJson = opts.json ?? false;

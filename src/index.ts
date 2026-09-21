@@ -8,7 +8,8 @@
  */
 
 import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { delimiter, dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Command, Help } from "commander";
 import { createAgentsCommand } from "./commands/agents.ts";
 import { cleanCommand } from "./commands/clean.ts";
@@ -25,6 +26,7 @@ import { createGroupCommand } from "./commands/group.ts";
 import { createHooksCommand } from "./commands/hooks.ts";
 import { initCommand } from "./commands/init.ts";
 import { createInspectCommand } from "./commands/inspect.ts";
+import { createLocalCommand } from "./commands/local.ts";
 import { createLogCommand } from "./commands/log.ts";
 import { logsCommand } from "./commands/logs.ts";
 import { mailCommand } from "./commands/mail.ts";
@@ -52,8 +54,15 @@ import { ConfigError, OverstoryError, WorktreeError } from "./errors.ts";
 import { jsonError } from "./json.ts";
 import { brand, chalk, muted, setQuiet } from "./logging/color.ts";
 
-export const VERSION = "0.11.0";
+export const VERSION = "0.1.0-alpha.1";
 
+const packageRoot = fileURLToPath(new URL("..", import.meta.url));
+process.env.PATH = [
+	join(packageRoot, "bin"),
+	join(packageRoot, "node_modules", ".bin"),
+	dirname(process.execPath),
+	process.env.PATH,
+].join(delimiter);
 const rawArgs = process.argv.slice(2);
 
 // Handle --version --json before Commander processes the flag
@@ -61,7 +70,7 @@ if ((rawArgs.includes("-v") || rawArgs.includes("--version")) && rawArgs.include
 	const platform = `${process.platform}-${process.arch}`;
 	console.log(
 		JSON.stringify({
-			name: "@os-eco/overstory-cli",
+			name: "@melkizedekict/superswarm",
 			version: VERSION,
 			runtime: "bun",
 			platform,
@@ -242,6 +251,7 @@ program.hook("postAction", (_thisCmd, actionCommand) => {
 
 // Migrated commands — use addCommand() with createXCommand() factories
 program.addCommand(createAgentsCommand());
+program.addCommand(createLocalCommand());
 program.addCommand(createDoctorCommand());
 program.addCommand(createOrchestratorCommand());
 program.addCommand(createCoordinatorCommand());
@@ -272,7 +282,7 @@ program
 	.option("--skip-onboard", "Skip CLAUDE.md onboarding step for ecosystem tools")
 	.option("--json", "Output result as JSON")
 	.action(async (opts) => {
-		await initCommand(opts);
+		await initCommand({ ...opts, local: true });
 	});
 
 program

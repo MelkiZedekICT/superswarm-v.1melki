@@ -1,5 +1,5 @@
 import { unlink } from "node:fs/promises";
-import { join } from "node:path";
+import { join, normalize, resolve } from "node:path";
 import { WorktreeError } from "../errors.ts";
 
 /**
@@ -98,7 +98,7 @@ export async function validateWorktreeCreation(opts: {
 	const { repoRoot, worktreePath, branchName } = opts;
 
 	const entries = await listWorktrees(repoRoot);
-	const registered = entries.some((entry) => entry.path === worktreePath);
+	const registered = entries.some((entry) => samePath(entry.path, worktreePath));
 	if (!registered) {
 		await rollbackWorktree(repoRoot, worktreePath, branchName);
 		throw new WorktreeError(
@@ -163,6 +163,12 @@ interface WorktreeEntry {
 	head: string;
 }
 
+function samePath(left: string, right: string): boolean {
+	const a = resolve(left);
+	const b = resolve(right);
+	return process.platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
 /**
  * Parse the output of `git worktree list --porcelain` into structured entries.
  *
@@ -191,7 +197,7 @@ function parseWorktreeOutput(output: string): WorktreeEntry[] {
 		const lines = block.trim().split("\n");
 		for (const line of lines) {
 			if (line.startsWith("worktree ")) {
-				path = line.slice("worktree ".length);
+				path = normalize(line.slice("worktree ".length));
 			} else if (line.startsWith("HEAD ")) {
 				head = line.slice("HEAD ".length);
 			} else if (line.startsWith("branch ")) {
@@ -262,7 +268,7 @@ export async function removeWorktree(
 ): Promise<void> {
 	// First, figure out which branch this worktree is on so we can clean it up
 	const worktrees = await listWorktrees(repoRoot);
-	const entry = worktrees.find((wt) => wt.path === path);
+	const entry = worktrees.find((wt) => samePath(wt.path, path));
 	const branchName = entry?.branch ?? "";
 
 	// Remove the worktree (--force handles untracked files and uncommitted changes)
