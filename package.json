@@ -49,7 +49,7 @@
 		"typecheck": "tsc --noEmit",
 		"version:bump": "bun scripts/version-bump.ts",
 		"build:ui": "cd ui && bun install && bun run build",
-		"prepack": "bun run build:ui"
+		"prepack": "node scripts/verify-package.mjs"
 	},
 	"dependencies": {
 		"@earendil-works/pi-coding-agent": "0.85.1",

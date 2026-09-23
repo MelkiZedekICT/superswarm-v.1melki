@@ -6,6 +6,10 @@ bun.lockb
 dist/
 *.tsbuildinfo
 
+# The CLI package serves the reviewed production dashboard directly.
+!ui/dist/
+!ui/dist/**
+
 # OS files
 .DS_Store
 Thumbs.db
