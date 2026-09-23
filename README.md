@@ -7,6 +7,10 @@ model qualification before role assignment.
 
 Project: https://github.com/MelkiZedekICT/superswarm-v.1melki
 
+Current progress, release blockers, and the Jev integration research are recorded
+in [SUPERSWARM_PROGRESS_REPORT.md](SUPERSWARM_PROGRESS_REPORT.md). The latest
+verified build results are in [BUILD_STATUS.md](BUILD_STATUS.md).
+
 The original MIT license and attribution are preserved. The upstream package
 identity, `ov`/`overstory` commands, and `.overstory` configuration remain for
 compatibility; `superswarm` is also available as a command when linked/installed
