@@ -70,6 +70,7 @@ export class LocalRuntime implements AgentRuntime {
 
 	buildDirectSpawn(opts: DirectSpawnOpts): string[] {
 		const argv = [process.execPath, this.worker, "--model", this.model(opts.model)];
+		argv.push("--instructions", opts.instructionPath);
 		if (opts.resumeSessionId) argv.push("--resume", opts.resumeSessionId);
 		return argv;
 	}

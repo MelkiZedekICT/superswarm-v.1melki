@@ -1,6 +1,6 @@
 /** Pi SDK tools with a fixed, local Ollama provider and Overstory stream-json transport. */
 import { mkdir, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import {
 	createAgentSession,
@@ -16,7 +16,12 @@ import { localFetch } from "./transport.ts";
 
 const { values } = parseArgs({
 	args: process.argv.slice(2),
-	options: { model: { type: "string" }, resume: { type: "string" }, print: { type: "string" } },
+	options: {
+		model: { type: "string" },
+		resume: { type: "string" },
+		print: { type: "string" },
+		instructions: { type: "string", default: "AGENTS.md" },
+	},
 });
 const modelName = values.model;
 const print = values.print !== undefined;
@@ -38,6 +43,10 @@ async function main() {
 	const info = (await check.json()) as Record<string, unknown>;
 	if (info.remote_model || info.remote_host) throw new Error("Ollama cloud models are disabled.");
 	const cwd = process.cwd();
+	const instructionPath = resolve(cwd, values.instructions ?? "AGENTS.md");
+	const instructionRelative = relative(cwd, instructionPath);
+	if (isAbsolute(instructionRelative) || instructionRelative.startsWith(".."))
+		throw new Error("Instruction file must stay inside the task worktree.");
 	if (process.env.SUPERSWARM_QUALIFICATION !== "1") {
 		await assertQualifiedLocalModel(await localProjectRoot(cwd), modelName);
 	}
@@ -89,7 +98,7 @@ async function main() {
 		noThemes: true,
 		noContextFiles: true,
 		extensionFactories: hooks ? [localPolicy(hooks)] : [],
-		appendSystemPrompt: hooks ? [await Bun.file(join(cwd, "AGENTS.md")).text()] : [],
+		appendSystemPrompt: hooks ? [await Bun.file(instructionPath).text()] : [],
 	});
 	await resourceLoader.reload();
 	let sessionManager = SessionManager.create(cwd, join(state, "sessions"));
@@ -189,7 +198,16 @@ async function main() {
 		}, 300000);
 		try {
 			await session.prompt(text);
-			if (!print && process.env.SUPERSWARM_QUALIFICATION !== "1") {
+			if (!print && process.env.SUPERSWARM_TASK_MODE === "1" && !failed) {
+				await session.prompt(
+					"Inspect the requested file and git diff now. If the task is incomplete, use tools to finish it. Do not merely describe a command. Stop when the requested file change is present.",
+				);
+			}
+			if (
+				!print &&
+				process.env.SUPERSWARM_QUALIFICATION !== "1" &&
+				process.env.SUPERSWARM_TASK_MODE !== "1"
+			) {
 				for (let attempt = 1; attempt <= 5 && !failed && !terminalSignal; attempt++) {
 					await session.prompt(
 						"Continue the assigned task now. Use tools and complete the remaining edits, checks, commit, and terminal mail. Do not describe future actions.",

@@ -44,6 +44,7 @@ import { specWriteCommand } from "./commands/spec.ts";
 import { createStatusCommand } from "./commands/status.ts";
 import { stopCommand } from "./commands/stop.ts";
 import { createSupervisorCommand } from "./commands/supervisor.ts";
+import { createTaskCommand } from "./commands/task.ts";
 import { traceCommand } from "./commands/trace.ts";
 import { createUpdateCommand } from "./commands/update.ts";
 import { createUpgradeCommand } from "./commands/upgrade.ts";
@@ -54,7 +55,7 @@ import { ConfigError, OverstoryError, WorktreeError } from "./errors.ts";
 import { jsonError } from "./json.ts";
 import { brand, chalk, muted, setQuiet } from "./logging/color.ts";
 
-export const VERSION = "0.1.0-alpha.1";
+export const VERSION = "0.1.0-alpha.2";
 
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 process.env.PATH = [
@@ -81,6 +82,7 @@ if ((rawArgs.includes("-v") || rawArgs.includes("--version")) && rawArgs.include
 
 const COMMANDS = [
 	"agents",
+	"task",
 	"init",
 	"sling",
 	"spec",
@@ -251,6 +253,7 @@ program.hook("postAction", (_thisCmd, actionCommand) => {
 
 // Migrated commands — use addCommand() with createXCommand() factories
 program.addCommand(createAgentsCommand());
+program.addCommand(createTaskCommand());
 program.addCommand(createLocalCommand());
 program.addCommand(createDoctorCommand());
 program.addCommand(createOrchestratorCommand());
