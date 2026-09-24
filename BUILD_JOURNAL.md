@@ -1,5 +1,16 @@
 # Superswarm build journal
 
+## 24 September 2026 — operator task history
+
+- Added `superswarm task history` so operators can review completed and failed
+  local file-task attempts without opening the JSONL journal manually.
+- Added `--last 1..100` and `--json` output for terminal use and automation.
+- Implemented bounded reverse journal reads in 64 KB chunks. History lookup
+  stops once it has enough recent records instead of loading an indefinitely
+  growing journal into memory.
+- Added tests for newest-first ordering, requested limits, append preservation,
+  and invalid limits. Verified the CLI against the disposable acceptance journal.
+
 ## 24 September 2026 — task engine architecture cleanup
 
 - Audited the file-task implementation with the architect-review, clean-code,

@@ -47,6 +47,7 @@ superswarm local status
 superswarm local qualify --model YOUR_INSTALLED_MODEL
 superswarm local configure --model YOUR_INSTALLED_MODEL
 superswarm task "Describe one bounded coding change" --files src/file.ts
+superswarm task history --last 10
 superswarm serve
 ```
 
@@ -55,6 +56,7 @@ and local-mode projects reject cloud runtime overrides. See
 [RESEARCH_GAPS.md](RESEARCH_GAPS.md) for what “qualified” means and current limits.
 Direct tasks run in isolated branches, rerun the configured quality gates, and
 write evidence to `.overstory/task-journal.jsonl`. See [BUILD_JOURNAL.md](BUILD_JOURNAL.md).
+Use `superswarm task history --json` when another tool needs the structured task record.
 
 ## Upstream compatibility
 
