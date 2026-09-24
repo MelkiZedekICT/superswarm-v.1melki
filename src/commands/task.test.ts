@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { assessTaskEvidence, normalizeTaskScope } from "./task.ts";
+import { assessTaskEvidence, normalizeTaskScope } from "../tasks/evidence.ts";
 
 describe("verified tasks", () => {
 	test("normalizes safe scope", () =>

@@ -1,5 +1,25 @@
 # Superswarm build journal
 
+## 24 September 2026 — task engine architecture cleanup
+
+- Audited the file-task implementation with the architect-review, clean-code,
+  and refactor-clean workflows. The main hotspot was `src/commands/task.ts`,
+  which combined CLI presentation, policy, Git, process execution, persistence,
+  and orchestration in one module.
+- Reduced the command to input/output handling and moved task behavior into the
+  `src/tasks/` boundary: evidence policy, Git adapter, append-only journal, and
+  workflow runner. The runtime-facing behavior and CLI syntax remain unchanged.
+- Replaced whole-file journal rewrites with append-only writes. Journal cost no
+  longer grows with the number of completed tasks.
+- Removed a duplicate Ollama model-list request by returning the already-checked
+  installed model from qualification.
+- Added a regression test proving that journal entries append without replacing
+  earlier task evidence.
+
+Architecture decision: keep task acceptance rules pure and independent from the
+agent runtime. A future local decision engine or stronger model can replace the
+runner without weakening scope, diff, quality-gate, and commit evidence.
+
 ## 23 September 2026 — evidence-gated local task execution
 
 - Confirmed that orchestration existed but there was no simple evidence-based

@@ -60,6 +60,13 @@ export async function assertQualifiedLocalModel(
 	projectRoot: string,
 	modelName: string,
 ): Promise<void> {
+	await qualifiedLocalModel(projectRoot, modelName);
+}
+
+export async function qualifiedLocalModel(
+	projectRoot: string,
+	modelName: string,
+): Promise<InstalledLocalModel> {
 	const [models, registry] = await Promise.all([
 		installedLocalModels(),
 		readQualifications(projectRoot),
@@ -77,6 +84,7 @@ export async function assertQualifiedLocalModel(
 			`Model ${modelName} is not qualified for this project and machine. Run superswarm local qualify --model ${modelName}.`,
 		);
 	}
+	return installed;
 }
 
 /** Resolve the main project even when the worker starts inside an agent worktree. */
