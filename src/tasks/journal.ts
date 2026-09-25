@@ -27,6 +27,7 @@ export interface TaskJournalEntry {
 export interface TaskHistoryQuery {
 	limit?: number;
 	status?: TaskJournalEntry["status"];
+	model?: string;
 }
 
 export async function appendTaskJournal(root: string, entry: object): Promise<void> {
@@ -122,6 +123,7 @@ export async function queryTaskHistory(
 		try {
 			const entry = JSON.parse(line) as TaskJournalEntry;
 			if (query.status && entry.status !== query.status) continue;
+			if (query.model && entry.model !== query.model) continue;
 			matches.push(entry);
 			if (matches.length > limit) matches.shift();
 		} catch {

@@ -95,4 +95,12 @@ describe("task journal", () => {
 		const entries = await queryTaskHistory(root, { limit: 2, status: "failed" });
 		expect(entries.map((entry) => entry.taskId)).toEqual(["three", "one"]);
 	});
+
+	test("filters history by exact model tag", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-filter-model-"));
+		await appendTaskJournal(root, { taskId: "small", model: "qwen:1.5b" });
+		await appendTaskJournal(root, { taskId: "large", model: "qwen:7b" });
+		const entries = await queryTaskHistory(root, { model: "qwen:7b" });
+		expect(entries.map((entry) => entry.taskId)).toEqual(["large"]);
+	});
 });

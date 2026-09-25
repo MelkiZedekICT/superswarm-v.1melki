@@ -31,12 +31,18 @@ async function historyAction(options: {
 	last: string;
 	json?: boolean;
 	status?: "completed" | "failed";
+	model?: string;
 }): Promise<void> {
 	const limit = Number.parseInt(options.last, 10);
 	const config = await loadConfig(process.cwd());
-	const entries = options.status
-		? await queryTaskHistory(config.project.root, { limit, status: options.status })
-		: await readTaskHistory(config.project.root, limit);
+	const entries =
+		options.status || options.model
+			? await queryTaskHistory(config.project.root, {
+					limit,
+					status: options.status,
+					model: options.model,
+				})
+			: await readTaskHistory(config.project.root, limit);
 	if (options.json) {
 		console.log(JSON.stringify({ entries }, null, 2));
 		return;
@@ -93,6 +99,7 @@ export function createTaskCommand(): Command {
 		.description("Show recent verified file-task attempts")
 		.option("--last <count>", "Number of attempts to show", "10")
 		.option("--status <status>", "Filter by completed or failed")
+		.option("--model <name>", "Filter by exact local model tag")
 		.option("--json", "Output history as JSON")
 		.action(async (_options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
@@ -104,6 +111,7 @@ export function createTaskCommand(): Command {
 				last: String(options.last),
 				json: Boolean(options.json),
 				status: parsedStatus,
+				model: options.model as string | undefined,
 			});
 		});
 	return command;
