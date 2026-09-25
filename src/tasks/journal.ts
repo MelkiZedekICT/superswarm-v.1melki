@@ -24,6 +24,11 @@ export interface TaskJournalEntry {
 	stderr?: string | null;
 }
 
+export interface TaskHistoryQuery {
+	limit?: number;
+	status?: TaskJournalEntry["status"];
+}
+
 export async function appendTaskJournal(root: string, entry: object): Promise<void> {
 	const directory = join(root, ".overstory");
 	await mkdir(directory, { recursive: true });
@@ -97,4 +102,31 @@ export async function findTaskJournalEntry(
 		}
 	}
 	return match;
+}
+
+export async function queryTaskHistory(
+	root: string,
+	query: TaskHistoryQuery = {},
+): Promise<TaskJournalEntry[]> {
+	const limit = query.limit ?? 10;
+	if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+		throw new Error("History limit must be an integer from 1 to 100.");
+	const path = join(root, ".overstory", "task-journal.jsonl");
+	if (!(await Bun.file(path).exists())) return [];
+	const matches: TaskJournalEntry[] = [];
+	const lines = createInterface({
+		input: createReadStream(path),
+		crlfDelay: Number.POSITIVE_INFINITY,
+	});
+	for await (const line of lines) {
+		try {
+			const entry = JSON.parse(line) as TaskJournalEntry;
+			if (query.status && entry.status !== query.status) continue;
+			matches.push(entry);
+			if (matches.length > limit) matches.shift();
+		} catch {
+			// Ignore an incomplete record while retaining valid history.
+		}
+	}
+	return matches.reverse();
 }

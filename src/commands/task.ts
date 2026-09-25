@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../config.ts";
-import { findTaskJournalEntry, readTaskHistory } from "../tasks/journal.ts";
+import { findTaskJournalEntry, queryTaskHistory, readTaskHistory } from "../tasks/journal.ts";
 import { runVerifiedTask, type VerifiedTaskOptions } from "../tasks/runner.ts";
 
 function printTaskResult(result: Awaited<ReturnType<typeof runVerifiedTask>>, json: boolean): void {
@@ -27,10 +27,16 @@ async function taskAction(
 	if (result.error) process.exitCode = 1;
 }
 
-async function historyAction(options: { last: string; json?: boolean }): Promise<void> {
+async function historyAction(options: {
+	last: string;
+	json?: boolean;
+	status?: "completed" | "failed";
+}): Promise<void> {
 	const limit = Number.parseInt(options.last, 10);
 	const config = await loadConfig(process.cwd());
-	const entries = await readTaskHistory(config.project.root, limit);
+	const entries = options.status
+		? await queryTaskHistory(config.project.root, { limit, status: options.status })
+		: await readTaskHistory(config.project.root, limit);
 	if (options.json) {
 		console.log(JSON.stringify({ entries }, null, 2));
 		return;
@@ -86,10 +92,19 @@ export function createTaskCommand(): Command {
 		.command("history")
 		.description("Show recent verified file-task attempts")
 		.option("--last <count>", "Number of attempts to show", "10")
+		.option("--status <status>", "Filter by completed or failed")
 		.option("--json", "Output history as JSON")
 		.action(async (_options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
-			await historyAction({ last: String(options.last), json: Boolean(options.json) });
+			const status = options.status as string | undefined;
+			if (status && status !== "completed" && status !== "failed")
+				throw new Error("--status must be completed or failed.");
+			const parsedStatus = status as "completed" | "failed" | undefined;
+			await historyAction({
+				last: String(options.last),
+				json: Boolean(options.json),
+				status: parsedStatus,
+			});
 		});
 	return command;
 }

@@ -2,7 +2,12 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { appendTaskJournal, findTaskJournalEntry, readTaskHistory } from "./journal.ts";
+import {
+	appendTaskJournal,
+	findTaskJournalEntry,
+	queryTaskHistory,
+	readTaskHistory,
+} from "./journal.ts";
 
 let root = "";
 
@@ -77,5 +82,17 @@ describe("task journal", () => {
 			await appendTaskJournal(root, { taskId: `task-${index}`, instruction: `item ${index}` });
 		expect((await findTaskJournalEntry(root, "task-2"))?.instruction).toBe("item 2");
 		expect(await findTaskJournalEntry(root, "missing")).toBeNull();
+	});
+
+	test("filters history by completion status before applying the limit", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-filter-history-"));
+		for (const [taskId, status] of [
+			["one", "failed"],
+			["two", "completed"],
+			["three", "failed"],
+		] as const)
+			await appendTaskJournal(root, { taskId, status });
+		const entries = await queryTaskHistory(root, { limit: 2, status: "failed" });
+		expect(entries.map((entry) => entry.taskId)).toEqual(["three", "one"]);
 	});
 });
