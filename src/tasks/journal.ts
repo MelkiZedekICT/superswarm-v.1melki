@@ -32,6 +32,15 @@ export interface TaskHistoryQuery {
 	since?: string;
 }
 
+export interface TaskStatistics {
+	total: number;
+	completed: number;
+	failed: number;
+	successRate: number;
+	averageDurationMs: number | null;
+	models: Record<string, number>;
+}
+
 export async function appendTaskJournal(root: string, entry: object): Promise<void> {
 	const directory = join(root, ".overstory");
 	await mkdir(directory, { recursive: true });
@@ -134,4 +143,43 @@ export async function queryTaskHistory(
 		}
 	}
 	return matches.reverse();
+}
+
+export async function readTaskStatistics(root: string): Promise<TaskStatistics> {
+	const path = join(root, ".overstory", "task-journal.jsonl");
+	const statistics: TaskStatistics = {
+		total: 0,
+		completed: 0,
+		failed: 0,
+		successRate: 0,
+		averageDurationMs: null,
+		models: {},
+	};
+	if (!(await Bun.file(path).exists())) return statistics;
+	let durationTotal = 0;
+	let durationCount = 0;
+	const lines = createInterface({
+		input: createReadStream(path),
+		crlfDelay: Number.POSITIVE_INFINITY,
+	});
+	for await (const line of lines) {
+		try {
+			const entry = JSON.parse(line) as TaskJournalEntry;
+			statistics.total++;
+			if (entry.status === "completed") statistics.completed++;
+			if (entry.status === "failed") statistics.failed++;
+			if (entry.model) statistics.models[entry.model] = (statistics.models[entry.model] ?? 0) + 1;
+			if (typeof entry.durationMs === "number") {
+				durationTotal += entry.durationMs;
+				durationCount++;
+			}
+		} catch {
+			// Malformed lines are excluded from operational statistics.
+		}
+	}
+	statistics.successRate =
+		statistics.total === 0 ? 0 : Number((statistics.completed / statistics.total).toFixed(4));
+	statistics.averageDurationMs =
+		durationCount === 0 ? null : Math.round(durationTotal / durationCount);
+	return statistics;
 }

@@ -7,6 +7,7 @@ import {
 	findTaskJournalEntry,
 	queryTaskHistory,
 	readTaskHistory,
+	readTaskStatistics,
 } from "./journal.ts";
 
 let root = "";
@@ -116,5 +117,29 @@ describe("task journal", () => {
 		});
 		const entries = await queryTaskHistory(root, { since: "2026-09-25T00:00:00.000Z" });
 		expect(entries.map((entry) => entry.taskId)).toEqual(["today"]);
+	});
+
+	test("summarizes outcomes, duration, and model usage", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-task-stats-"));
+		await appendTaskJournal(root, {
+			taskId: "one",
+			status: "completed",
+			model: "qwen",
+			durationMs: 100,
+		});
+		await appendTaskJournal(root, {
+			taskId: "two",
+			status: "failed",
+			model: "qwen",
+			durationMs: 300,
+		});
+		expect(await readTaskStatistics(root)).toEqual({
+			total: 2,
+			completed: 1,
+			failed: 1,
+			successRate: 0.5,
+			averageDurationMs: 200,
+			models: { qwen: 2 },
+		});
 	});
 });

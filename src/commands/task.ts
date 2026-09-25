@@ -2,7 +2,12 @@ import { Command } from "commander";
 import { loadConfig } from "../config.ts";
 import { qualifiedLocalModel } from "../runtimes/local/qualification.ts";
 import { exportTaskEvidence } from "../tasks/export.ts";
-import { findTaskJournalEntry, queryTaskHistory, readTaskHistory } from "../tasks/journal.ts";
+import {
+	findTaskJournalEntry,
+	queryTaskHistory,
+	readTaskHistory,
+	readTaskStatistics,
+} from "../tasks/journal.ts";
 import { parseTaskTimeout } from "../tasks/limits.ts";
 import { buildVerifiedTaskPlan } from "../tasks/plan.ts";
 import { taskRetryInput } from "../tasks/retry.ts";
@@ -114,6 +119,23 @@ async function retryAction(
 	if (result.error) process.exitCode = 1;
 }
 
+async function statsAction(options: { json?: boolean }): Promise<void> {
+	const config = await loadConfig(process.cwd());
+	const statistics = await readTaskStatistics(config.project.root);
+	if (options.json) {
+		console.log(JSON.stringify(statistics, null, 2));
+		return;
+	}
+	console.log(`Tasks: ${statistics.total}`);
+	console.log(`Completed: ${statistics.completed}`);
+	console.log(`Failed: ${statistics.failed}`);
+	console.log(`Success rate: ${(statistics.successRate * 100).toFixed(1)}%`);
+	if (statistics.averageDurationMs !== null)
+		console.log(`Average duration: ${(statistics.averageDurationMs / 1000).toFixed(1)}s`);
+	for (const [model, count] of Object.entries(statistics.models))
+		console.log(`Model ${model}: ${count} task${count === 1 ? "" : "s"}`);
+}
+
 async function planAction(
 	instruction: string,
 	options: { files: string; model?: string; json?: boolean },
@@ -161,6 +183,13 @@ export function createTaskCommand(): Command {
 		.action(async (taskId, _options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
 			await showAction(String(taskId), { json: Boolean(options.json) });
+		});
+	command
+		.command("stats")
+		.description("Summarize verified task outcomes and model usage")
+		.option("--json", "Output task statistics as JSON")
+		.action(async (options) => {
+			await statsAction({ json: Boolean(options.json) });
 		});
 	command
 		.command("retry")
