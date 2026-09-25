@@ -32,15 +32,17 @@ async function historyAction(options: {
 	json?: boolean;
 	status?: "completed" | "failed";
 	model?: string;
+	since?: string;
 }): Promise<void> {
 	const limit = Number.parseInt(options.last, 10);
 	const config = await loadConfig(process.cwd());
 	const entries =
-		options.status || options.model
+		options.status || options.model || options.since
 			? await queryTaskHistory(config.project.root, {
 					limit,
 					status: options.status,
 					model: options.model,
+					since: options.since,
 				})
 			: await readTaskHistory(config.project.root, limit);
 	if (options.json) {
@@ -100,6 +102,7 @@ export function createTaskCommand(): Command {
 		.option("--last <count>", "Number of attempts to show", "10")
 		.option("--status <status>", "Filter by completed or failed")
 		.option("--model <name>", "Filter by exact local model tag")
+		.option("--since <date>", "Show attempts completed on or after an ISO date")
 		.option("--json", "Output history as JSON")
 		.action(async (_options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
@@ -107,11 +110,15 @@ export function createTaskCommand(): Command {
 			if (status && status !== "completed" && status !== "failed")
 				throw new Error("--status must be completed or failed.");
 			const parsedStatus = status as "completed" | "failed" | undefined;
+			const rawSince = options.since as string | undefined;
+			const since = rawSince ? new Date(rawSince) : undefined;
+			if (since && Number.isNaN(since.getTime())) throw new Error("--since must be a valid date.");
 			await historyAction({
 				last: String(options.last),
 				json: Boolean(options.json),
 				status: parsedStatus,
 				model: options.model as string | undefined,
+				since: since?.toISOString(),
 			});
 		});
 	return command;

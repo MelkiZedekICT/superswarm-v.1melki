@@ -103,4 +103,18 @@ describe("task journal", () => {
 		const entries = await queryTaskHistory(root, { model: "qwen:7b" });
 		expect(entries.map((entry) => entry.taskId)).toEqual(["large"]);
 	});
+
+	test("filters history by completion date", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-filter-date-"));
+		await appendTaskJournal(root, {
+			taskId: "old",
+			completedAt: "2026-09-24T23:59:59.000Z",
+		});
+		await appendTaskJournal(root, {
+			taskId: "today",
+			completedAt: "2026-09-25T00:00:00.000Z",
+		});
+		const entries = await queryTaskHistory(root, { since: "2026-09-25T00:00:00.000Z" });
+		expect(entries.map((entry) => entry.taskId)).toEqual(["today"]);
+	});
 });
