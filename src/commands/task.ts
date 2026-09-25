@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../config.ts";
+import { exportTaskEvidence } from "../tasks/export.ts";
 import { findTaskJournalEntry, queryTaskHistory, readTaskHistory } from "../tasks/journal.ts";
 import { runVerifiedTask, type VerifiedTaskOptions } from "../tasks/runner.ts";
 
@@ -79,6 +80,14 @@ async function showAction(taskId: string, options: { json?: boolean }): Promise<
 	if (entry.error) console.log(`Error: ${entry.error}`);
 }
 
+async function exportAction(taskId: string, output: string): Promise<void> {
+	const config = await loadConfig(process.cwd());
+	const entry = await findTaskJournalEntry(config.project.root, taskId);
+	if (!entry) throw new Error(`Task not found: ${taskId}`);
+	const target = await exportTaskEvidence(config.project.root, entry, output);
+	console.log(`Task evidence exported to ${target}`);
+}
+
 export function createTaskCommand(): Command {
 	const command = new Command("task")
 		.description("Run one verified coding task with a qualified local model")
@@ -95,6 +104,14 @@ export function createTaskCommand(): Command {
 		.action(async (taskId, _options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
 			await showAction(String(taskId), { json: Boolean(options.json) });
+		});
+	command
+		.command("export")
+		.description("Export one task's evidence as a portable JSON report")
+		.argument("<task-id>", "Task identifier from task history")
+		.requiredOption("--output <path>", "Report path inside the project")
+		.action(async (taskId, options) => {
+			await exportAction(String(taskId), String(options.output));
 		});
 	command
 		.command("history")
