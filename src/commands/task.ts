@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { loadConfig } from "../config.ts";
-import { readTaskHistory } from "../tasks/journal.ts";
+import { findTaskJournalEntry, readTaskHistory } from "../tasks/journal.ts";
 import { runVerifiedTask, type VerifiedTaskOptions } from "../tasks/runner.ts";
 
 function printTaskResult(result: Awaited<ReturnType<typeof runVerifiedTask>>, json: boolean): void {
@@ -47,6 +47,24 @@ async function historyAction(options: { last: string; json?: boolean }): Promise
 	}
 }
 
+async function showAction(taskId: string, options: { json?: boolean }): Promise<void> {
+	const config = await loadConfig(process.cwd());
+	const entry = await findTaskJournalEntry(config.project.root, taskId);
+	if (!entry) throw new Error(`Task not found: ${taskId}`);
+	if (options.json) {
+		console.log(JSON.stringify(entry, null, 2));
+		return;
+	}
+	console.log(`${entry.taskId} — ${entry.status}`);
+	console.log(`Instruction: ${entry.instruction}`);
+	console.log(`Model: ${entry.model}${entry.modelDigest ? ` (${entry.modelDigest})` : ""}`);
+	if (entry.scope) console.log(`Scope: ${entry.scope.join(", ")}`);
+	console.log(`Branch: ${entry.branch}`);
+	if (entry.worktree) console.log(`Worktree: ${entry.worktree}`);
+	if (entry.commit) console.log(`Commit: ${entry.commit}`);
+	if (entry.error) console.log(`Error: ${entry.error}`);
+}
+
 export function createTaskCommand(): Command {
 	const command = new Command("task")
 		.description("Run one verified coding task with a qualified local model")
@@ -55,6 +73,15 @@ export function createTaskCommand(): Command {
 		.option("--model <name>", "Qualified installed Ollama model")
 		.option("--json", "Output the task result as JSON")
 		.action(taskAction);
+	command
+		.command("show")
+		.description("Inspect one verified file-task attempt")
+		.argument("<task-id>", "Task identifier from task history")
+		.option("--json", "Output the task record as JSON")
+		.action(async (taskId, _options, actionCommand) => {
+			const options = actionCommand.optsWithGlobals();
+			await showAction(String(taskId), { json: Boolean(options.json) });
+		});
 	command
 		.command("history")
 		.description("Show recent verified file-task attempts")

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { appendTaskJournal, readTaskHistory } from "./journal.ts";
+import { appendTaskJournal, findTaskJournalEntry, readTaskHistory } from "./journal.ts";
 
 let root = "";
 
@@ -69,5 +69,13 @@ describe("task journal", () => {
 		expect(entry?.scope).toEqual(["src/greeting.ts"]);
 		expect(entry?.durationMs).toBe(2000);
 		expect(entry?.modelDigest).toBe("sha256:abc");
+	});
+
+	test("finds a task without limiting lookup to recent history", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-find-task-"));
+		for (let index = 0; index < 120; index++)
+			await appendTaskJournal(root, { taskId: `task-${index}`, instruction: `item ${index}` });
+		expect((await findTaskJournalEntry(root, "task-2"))?.instruction).toBe("item 2");
+		expect(await findTaskJournalEntry(root, "missing")).toBeNull();
 	});
 });
