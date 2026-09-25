@@ -8,12 +8,31 @@ import {
 	readQualifications,
 	writeQualification,
 } from "../runtimes/local/qualification.ts";
+import { collectLocalReadiness } from "../runtimes/local/readiness.ts";
 import { DEFAULT_LOCAL_MODEL, LocalRuntime } from "../runtimes/local.ts";
 
 export function createLocalCommand(): Command {
 	const command = new Command("local").description(
 		"Configure and verify local-only Ollama inference",
 	);
+	command
+		.command("doctor")
+		.description("Check whether this project is ready for verified local tasks")
+		.option("--json", "Output readiness checks as JSON")
+		.action(async (options: { json?: boolean }) => {
+			const config = await loadConfig(process.cwd());
+			const checks = await collectLocalReadiness(config);
+			const ready = checks.every((check) => check.status === "pass");
+			if (options.json) console.log(JSON.stringify({ ready, checks }, null, 2));
+			else {
+				for (const check of checks)
+					console.log(
+						`${check.status === "pass" ? "PASS" : "FAIL"} ${check.name}: ${check.detail}`,
+					);
+				console.log(ready ? "Superswarm is ready for local tasks." : "Superswarm needs attention.");
+			}
+			if (!ready) process.exitCode = 1;
+		});
 	command
 		.command("status")
 		.description("List downloaded models without loading them")
