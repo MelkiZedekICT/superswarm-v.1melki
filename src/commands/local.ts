@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { loadConfig } from "../config.ts";
 import {
 	installedLocalModels,
+	localQualificationStatuses,
 	readQualifications,
 	writeQualification,
 } from "../runtimes/local/qualification.ts";
@@ -15,6 +16,23 @@ export function createLocalCommand(): Command {
 	const command = new Command("local").description(
 		"Configure and verify local-only Ollama inference",
 	);
+	command
+		.command("qualifications")
+		.description("Show trust status for every installed local model digest")
+		.option("--json", "Output qualification status as JSON")
+		.action(async (options: { json?: boolean }) => {
+			const config = await loadConfig(process.cwd());
+			const [models, registry] = await Promise.all([
+				installedLocalModels(),
+				readQualifications(config.project.root),
+			]);
+			const entries = localQualificationStatuses(models, registry);
+			if (options.json) console.log(JSON.stringify({ entries }, null, 2));
+			else if (entries.length === 0) console.log("No local Ollama models are installed.");
+			else
+				for (const entry of entries)
+					console.log(`${entry.status.padEnd(11)} ${entry.model} ${entry.digest}`);
+		});
 	command
 		.command("doctor")
 		.description("Check whether this project is ready for verified local tasks")

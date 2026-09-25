@@ -21,6 +21,33 @@ export interface QualificationRegistry {
 	>;
 }
 
+export interface LocalQualificationStatus {
+	model: string;
+	digest: string;
+	qualifiedAt: string | null;
+	status: "qualified" | "stale" | "unqualified";
+}
+
+export function localQualificationStatuses(
+	models: InstalledLocalModel[],
+	registry: QualificationRegistry,
+): LocalQualificationStatus[] {
+	return models.map((model) => {
+		const qualification = registry.models[model.name];
+		return {
+			model: model.name,
+			digest: model.digest,
+			qualifiedAt: qualification?.qualifiedAt ?? null,
+			status:
+				qualification?.digest === model.digest
+					? "qualified"
+					: qualification
+						? "stale"
+						: "unqualified",
+		};
+	});
+}
+
 export async function installedLocalModels(): Promise<InstalledLocalModel[]> {
 	const response = await fetch("http://127.0.0.1:11434/api/tags", {
 		redirect: "error",
