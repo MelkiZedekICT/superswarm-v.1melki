@@ -5,6 +5,7 @@ import { exportTaskEvidence } from "../tasks/export.ts";
 import { findTaskJournalEntry, queryTaskHistory, readTaskHistory } from "../tasks/journal.ts";
 import { parseTaskTimeout } from "../tasks/limits.ts";
 import { buildVerifiedTaskPlan } from "../tasks/plan.ts";
+import { taskRetryInput } from "../tasks/retry.ts";
 import { runVerifiedTask, type VerifiedTaskOptions } from "../tasks/runner.ts";
 
 function printTaskResult(result: Awaited<ReturnType<typeof runVerifiedTask>>, json: boolean): void {
@@ -96,6 +97,23 @@ async function exportAction(taskId: string, output: string): Promise<void> {
 	console.log(`Task evidence exported to ${target}`);
 }
 
+async function retryAction(
+	taskId: string,
+	options: { timeoutMinutes: number; json?: boolean },
+): Promise<void> {
+	const config = await loadConfig(process.cwd());
+	const entry = await findTaskJournalEntry(config.project.root, taskId);
+	if (!entry) throw new Error(`Task not found: ${taskId}`);
+	const retry = taskRetryInput(entry);
+	const result = await runVerifiedTask(process.cwd(), retry.instruction, {
+		files: retry.files,
+		model: retry.model,
+		timeoutMinutes: options.timeoutMinutes,
+	});
+	printTaskResult(result, options.json ?? false);
+	if (result.error) process.exitCode = 1;
+}
+
 async function planAction(
 	instruction: string,
 	options: { files: string; model?: string; json?: boolean },
@@ -143,6 +161,18 @@ export function createTaskCommand(): Command {
 		.action(async (taskId, _options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
 			await showAction(String(taskId), { json: Boolean(options.json) });
+		});
+	command
+		.command("retry")
+		.description("Retry a recorded task with its original model and file scope")
+		.argument("<task-id>", "Task identifier from task history")
+		.option("--timeout <minutes>", "Stop an unresponsive task after 1 to 120 minutes", "30")
+		.option("--json", "Output the task result as JSON")
+		.action(async (taskId, options) => {
+			await retryAction(String(taskId), {
+				timeoutMinutes: parseTaskTimeout(options.timeout as string | undefined),
+				json: Boolean(options.json),
+			});
 		});
 	command
 		.command("plan")
