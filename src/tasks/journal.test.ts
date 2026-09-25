@@ -46,4 +46,28 @@ describe("task journal", () => {
 		root = await mkdtemp(join(tmpdir(), "superswarm-history-"));
 		expect(readTaskHistory(root, 0)).rejects.toThrow("1 to 100");
 	});
+
+	test("preserves launch metadata used for inspection and retry", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-journal-metadata-"));
+		await appendTaskJournal(root, {
+			taskId: "task-1",
+			status: "completed",
+			instruction: "Update the greeting",
+			model: "qwen",
+			modelDigest: "sha256:abc",
+			scope: ["src/greeting.ts"],
+			startedAt: "2026-09-25T00:00:00Z",
+			completedAt: "2026-09-25T00:00:02Z",
+			durationMs: 2000,
+			branch: "task-1",
+			worktree: "worktrees/task-1",
+			commit: "abc",
+			changedFiles: ["src/greeting.ts"],
+			error: null,
+		});
+		const [entry] = await readTaskHistory(root, 1);
+		expect(entry?.scope).toEqual(["src/greeting.ts"]);
+		expect(entry?.durationMs).toBe(2000);
+		expect(entry?.modelDigest).toBe("sha256:abc");
+	});
 });

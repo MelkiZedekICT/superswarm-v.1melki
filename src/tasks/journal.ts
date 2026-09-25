@@ -8,12 +8,18 @@ export interface TaskJournalEntry {
 	status: "completed" | "failed";
 	instruction: string;
 	model: string;
+	modelDigest?: string;
+	scope?: string[];
 	startedAt: string;
 	completedAt: string;
+	durationMs?: number;
 	branch: string;
+	worktree?: string;
 	commit: string | null;
 	changedFiles: string[];
+	quality?: unknown;
 	error: string | null;
+	stderr?: string | null;
 }
 
 export async function appendTaskJournal(root: string, entry: object): Promise<void> {
