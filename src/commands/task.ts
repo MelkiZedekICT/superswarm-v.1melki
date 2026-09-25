@@ -1,7 +1,9 @@
 import { Command } from "commander";
 import { loadConfig } from "../config.ts";
+import { qualifiedLocalModel } from "../runtimes/local/qualification.ts";
 import { exportTaskEvidence } from "../tasks/export.ts";
 import { findTaskJournalEntry, queryTaskHistory, readTaskHistory } from "../tasks/journal.ts";
+import { buildVerifiedTaskPlan } from "../tasks/plan.ts";
 import { runVerifiedTask, type VerifiedTaskOptions } from "../tasks/runner.ts";
 
 function printTaskResult(result: Awaited<ReturnType<typeof runVerifiedTask>>, json: boolean): void {
@@ -88,6 +90,31 @@ async function exportAction(taskId: string, output: string): Promise<void> {
 	console.log(`Task evidence exported to ${target}`);
 }
 
+async function planAction(
+	instruction: string,
+	options: { files: string; model?: string; json?: boolean },
+): Promise<void> {
+	const config = await loadConfig(process.cwd());
+	const modelName = options.model ?? config.models.builder;
+	if (!modelName) throw new Error("Pass --model or configure a local builder model.");
+	const model = await qualifiedLocalModel(config.project.root, modelName);
+	const plan = buildVerifiedTaskPlan({
+		root: config.project.root,
+		instruction,
+		files: options.files,
+		model: modelName,
+		modelDigest: model.digest,
+		qualityGates: config.project.qualityGates ?? [],
+	});
+	if (options.json) console.log(JSON.stringify(plan, null, 2));
+	else {
+		console.log(`Model: ${plan.model} (${plan.modelDigest})`);
+		console.log(`Scope: ${plan.scope.join(", ")}`);
+		console.log(`Quality gates: ${plan.qualityGates.map((gate) => gate.name).join(", ")}`);
+		console.log("Ready: a worktree will be created and committed only after all checks pass.");
+	}
+}
+
 export function createTaskCommand(): Command {
 	const command = new Command("task")
 		.description("Run one verified coding task with a qualified local model")
@@ -104,6 +131,20 @@ export function createTaskCommand(): Command {
 		.action(async (taskId, _options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
 			await showAction(String(taskId), { json: Boolean(options.json) });
+		});
+	command
+		.command("plan")
+		.description("Validate and preview a task without starting a model")
+		.argument("<instruction>", "Bounded coding task to preview")
+		.requiredOption("--files <paths>", "Allowed files, comma-separated; directories end with /")
+		.option("--model <name>", "Qualified installed Ollama model")
+		.option("--json", "Output the plan as JSON")
+		.action(async (instruction, options) => {
+			await planAction(String(instruction), {
+				files: String(options.files),
+				model: options.model as string | undefined,
+				json: Boolean(options.json),
+			});
 		});
 	command
 		.command("export")
