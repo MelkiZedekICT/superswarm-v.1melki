@@ -1,5 +1,21 @@
 # Superswarm build journal
 
+## 25 September 2026 — first operator-ready alpha
+
+- Added durable scope, digest, duration, timeout, worktree, quality, and error
+  evidence for every verified task.
+- Added task inspection, outcome/model/date history filters, portable evidence
+  export, preflight planning, bounded execution, evidence-based retry,
+  reliability statistics, and journal integrity verification.
+- Added `local doctor` for end-to-end launch readiness and `local
+  qualifications` for current, stale, and unqualified Ollama model digests.
+- Published a reproducible launch checklist and advanced the application to
+  `0.1.0-alpha.5`.
+
+Architecture decision: keep task records append-only and expose derived views
+as streaming readers. This preserves audit evidence while keeping memory bounded
+for long-lived projects.
+
 ## 24 September 2026 — operator task history
 
 - Added `superswarm task history` so operators can review completed and failed

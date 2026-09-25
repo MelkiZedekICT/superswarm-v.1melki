@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, rm } from "node:fs/promises";
+import { appendFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -8,6 +8,7 @@ import {
 	queryTaskHistory,
 	readTaskHistory,
 	readTaskStatistics,
+	verifyTaskJournal,
 } from "./journal.ts";
 
 let root = "";
@@ -141,5 +142,17 @@ describe("task journal", () => {
 			averageDurationMs: 200,
 			models: { qwen: 2 },
 		});
+	});
+
+	test("reports malformed, duplicate, and incomplete task evidence", async () => {
+		root = await mkdtemp(join(tmpdir(), "superswarm-verify-journal-"));
+		await appendTaskJournal(root, { taskId: "duplicate" });
+		await appendTaskJournal(root, { taskId: "duplicate" });
+		await appendFile(join(root, ".overstory", "task-journal.jsonl"), '{"taskId":\n');
+		const report = await verifyTaskJournal(root);
+		expect(report.valid).toBe(false);
+		expect(report.malformedLines).toEqual([3]);
+		expect(report.duplicateTaskIds).toEqual(["duplicate"]);
+		expect(report.invalidRecords).toHaveLength(2);
 	});
 });

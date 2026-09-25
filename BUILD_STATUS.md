@@ -1,6 +1,6 @@
 # Superswarm build status
 
-Verified on 21 September 2026 on Windows with Bun 1.4.2, Ollama 0.34.2,
+Verified through 25 September 2026 on Windows with Bun 1.4.2, Ollama 0.34.2,
 about 8 GB system RAM, and an RTX 2050 with 4 GB VRAM.
 
 ## Completed
@@ -26,6 +26,9 @@ about 8 GB system RAM, and an RTX 2050 with 4 GB VRAM.
   failed-server cleanup found while validating the upstream application.
 - Added Windows and POSIX installers, locked direct runtime dependencies, and
   retained the original MIT license and attribution.
+- Added launch controls for task planning, deadlines, retry, inspection,
+  filtering, evidence export, reliability statistics, journal verification,
+  exact-digest model health, and one-command local readiness checks.
 
 ## Design fidelity
 
@@ -56,10 +59,10 @@ Codex host could not initialize its browser automation assets.
 
 ## Current release boundary
 
-The source application is installable and its local-only boundary is implemented,
-but the autonomous swarm is not a production release until at least one coding
-model passes qualification and a complete builder/reviewer workflow on supported
-hardware. Superswarm deliberately refuses to substitute an unqualified model.
+The source application is installable and its local-only boundary is implemented
+as an alpha release. Autonomous coding remains conditional on a model passing
+qualification and a complete workflow on the user's hardware. Superswarm
+deliberately refuses to substitute an unqualified model.
 
 The remaining release work is:
 

@@ -36,9 +36,10 @@ In an existing Git repository:
 ```sh
 superswarm init --yes
 superswarm local status
-superswarm local configure --model MODEL_TAG
 superswarm local test --model MODEL_TAG
 superswarm local qualify --model MODEL_TAG
+superswarm local configure --model MODEL_TAG
+superswarm local doctor
 superswarm serve
 ```
 

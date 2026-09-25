@@ -7,6 +7,7 @@ import {
 	queryTaskHistory,
 	readTaskHistory,
 	readTaskStatistics,
+	verifyTaskJournal,
 } from "../tasks/journal.ts";
 import { parseTaskTimeout } from "../tasks/limits.ts";
 import { buildVerifiedTaskPlan } from "../tasks/plan.ts";
@@ -136,6 +137,22 @@ async function statsAction(options: { json?: boolean }): Promise<void> {
 		console.log(`Model ${model}: ${count} task${count === 1 ? "" : "s"}`);
 }
 
+async function verifyAction(options: { json?: boolean }): Promise<void> {
+	const config = await loadConfig(process.cwd());
+	const report = await verifyTaskJournal(config.project.root);
+	if (options.json) console.log(JSON.stringify(report, null, 2));
+	else {
+		console.log(`${report.valid ? "PASS" : "FAIL"} task journal: ${report.entries} entries`);
+		if (report.malformedLines.length)
+			console.log(`Malformed lines: ${report.malformedLines.join(", ")}`);
+		if (report.duplicateTaskIds.length)
+			console.log(`Duplicate task IDs: ${report.duplicateTaskIds.join(", ")}`);
+		for (const invalid of report.invalidRecords)
+			console.log(`Invalid line ${invalid.line}: ${invalid.reason}`);
+	}
+	if (!report.valid) process.exitCode = 1;
+}
+
 async function planAction(
 	instruction: string,
 	options: { files: string; model?: string; json?: boolean },
@@ -183,6 +200,13 @@ export function createTaskCommand(): Command {
 		.action(async (taskId, _options, actionCommand) => {
 			const options = actionCommand.optsWithGlobals();
 			await showAction(String(taskId), { json: Boolean(options.json) });
+		});
+	command
+		.command("verify")
+		.description("Check task evidence for malformed or duplicate records")
+		.option("--json", "Output the integrity report as JSON")
+		.action(async (options) => {
+			await verifyAction({ json: Boolean(options.json) });
 		});
 	command
 		.command("stats")

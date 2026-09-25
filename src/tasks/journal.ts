@@ -41,6 +41,14 @@ export interface TaskStatistics {
 	models: Record<string, number>;
 }
 
+export interface TaskJournalIntegrity {
+	valid: boolean;
+	entries: number;
+	malformedLines: number[];
+	duplicateTaskIds: string[];
+	invalidRecords: Array<{ line: number; reason: string }>;
+}
+
 export async function appendTaskJournal(root: string, entry: object): Promise<void> {
 	const directory = join(root, ".overstory");
 	await mkdir(directory, { recursive: true });
@@ -182,4 +190,62 @@ export async function readTaskStatistics(root: string): Promise<TaskStatistics> 
 	statistics.averageDurationMs =
 		durationCount === 0 ? null : Math.round(durationTotal / durationCount);
 	return statistics;
+}
+
+export async function verifyTaskJournal(root: string): Promise<TaskJournalIntegrity> {
+	const path = join(root, ".overstory", "task-journal.jsonl");
+	const report: TaskJournalIntegrity = {
+		valid: true,
+		entries: 0,
+		malformedLines: [],
+		duplicateTaskIds: [],
+		invalidRecords: [],
+	};
+	if (!(await Bun.file(path).exists())) return report;
+	const seen = new Set<string>();
+	const duplicates = new Set<string>();
+	const lines = createInterface({
+		input: createReadStream(path),
+		crlfDelay: Number.POSITIVE_INFINITY,
+	});
+	let lineNumber = 0;
+	for await (const line of lines) {
+		lineNumber++;
+		let entry: Partial<TaskJournalEntry>;
+		try {
+			entry = JSON.parse(line) as Partial<TaskJournalEntry>;
+		} catch {
+			report.malformedLines.push(lineNumber);
+			continue;
+		}
+		report.entries++;
+		const requiredStrings = [
+			"taskId",
+			"status",
+			"instruction",
+			"model",
+			"startedAt",
+			"completedAt",
+			"branch",
+		] as const;
+		const missing: string[] = requiredStrings.filter(
+			(field) => typeof entry[field] !== "string" || entry[field]?.length === 0,
+		);
+		if (!Array.isArray(entry.changedFiles)) missing.push("changedFiles");
+		if (missing.length > 0)
+			report.invalidRecords.push({
+				line: lineNumber,
+				reason: `Missing or invalid: ${missing.join(", ")}`,
+			});
+		if (entry.taskId) {
+			if (seen.has(entry.taskId)) duplicates.add(entry.taskId);
+			seen.add(entry.taskId);
+		}
+	}
+	report.duplicateTaskIds = [...duplicates].sort();
+	report.valid =
+		report.malformedLines.length === 0 &&
+		report.duplicateTaskIds.length === 0 &&
+		report.invalidRecords.length === 0;
+	return report;
 }

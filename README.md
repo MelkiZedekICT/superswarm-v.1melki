@@ -46,8 +46,12 @@ superswarm init --yes
 superswarm local status
 superswarm local qualify --model YOUR_INSTALLED_MODEL
 superswarm local configure --model YOUR_INSTALLED_MODEL
+superswarm local doctor
+superswarm task plan "Describe one bounded coding change" --files src/file.ts
 superswarm task "Describe one bounded coding change" --files src/file.ts
 superswarm task history --last 10
+superswarm task stats
+superswarm task verify
 superswarm serve
 ```
 
@@ -57,6 +61,8 @@ and local-mode projects reject cloud runtime overrides. See
 Direct tasks run in isolated branches, rerun the configured quality gates, and
 write evidence to `.overstory/task-journal.jsonl`. See [BUILD_JOURNAL.md](BUILD_JOURNAL.md).
 Use `superswarm task history --json` when another tool needs the structured task record.
+See [LAUNCH.md](LAUNCH.md) for release acceptance, task recovery, and the exact
+boundary of the local-model alpha.
 
 ## Upstream compatibility
 

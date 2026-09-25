@@ -1,6 +1,6 @@
 {
 	"name": "@melkizedekict/superswarm",
-	"version": "0.1.0-alpha.4",
+	"version": "0.1.0-alpha.5",
 	"description": "Superswarm — multi-agent coding orchestration based on Overstory by Jaymin West.",
 	"author": "Jaymin West",
 	"contributors": [
