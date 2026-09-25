@@ -19,6 +19,7 @@ export interface VerifiedTaskOptions {
 	files: string;
 	model?: string;
 	json?: boolean;
+	timeoutMinutes?: number;
 }
 
 function taskInstructions(agentName: string, scope: string[]): string {
@@ -55,6 +56,7 @@ async function executeAgent(
 	model: string,
 	instructions: string,
 	instruction: string,
+	timeoutMs: number,
 ) {
 	const runtime = new LocalRuntime();
 	const child = Bun.spawn(
@@ -81,12 +83,17 @@ async function executeAgent(
 		`${JSON.stringify({ type: "user", message: { role: "user", content: [{ type: "text", text: instruction }] } })}\n`,
 	);
 	child.stdin.end();
+	let timedOut = false;
+	const timeout = setTimeout(() => {
+		timedOut = true;
+		child.kill();
+	}, timeoutMs);
 	const [exitCode, output, stderr] = await Promise.all([
-		child.exited,
+		child.exited.finally(() => clearTimeout(timeout)),
 		new Response(child.stdout).text(),
 		new Response(child.stderr).text(),
 	]);
-	return { exitCode, output, stderr };
+	return { exitCode, output, stderr, timedOut };
 }
 
 export async function runVerifiedTask(
@@ -123,7 +130,15 @@ export async function runVerifiedTask(
 		scope,
 		config.project.qualityGates,
 	);
-	const agent = await executeAgent(worktree.path, root, modelName, instructions, instruction);
+	const timeoutMinutes = options.timeoutMinutes ?? 30;
+	const agent = await executeAgent(
+		worktree.path,
+		root,
+		modelName,
+		instructions,
+		instruction,
+		timeoutMinutes * 60_000,
+	);
 	const changedFiles = await listTaskChanges(worktree.path);
 	const outsideScope = changedFiles.filter((file) => !isFileInTaskScope(file, scope));
 	const quality =
@@ -137,6 +152,7 @@ export async function runVerifiedTask(
 		outsideScope,
 		quality,
 	});
+	if (agent.timedOut) error = `The local agent exceeded the ${timeoutMinutes}-minute timeout.`;
 	let commit: string | null = null;
 	if (!error) {
 		try {
@@ -155,6 +171,7 @@ export async function runVerifiedTask(
 		startedAt,
 		completedAt: new Date().toISOString(),
 		durationMs: Date.now() - Date.parse(startedAt),
+		timeoutMinutes,
 		branch: worktree.branch,
 		worktree: worktree.path,
 		commit,

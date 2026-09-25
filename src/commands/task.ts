@@ -3,6 +3,7 @@ import { loadConfig } from "../config.ts";
 import { qualifiedLocalModel } from "../runtimes/local/qualification.ts";
 import { exportTaskEvidence } from "../tasks/export.ts";
 import { findTaskJournalEntry, queryTaskHistory, readTaskHistory } from "../tasks/journal.ts";
+import { parseTaskTimeout } from "../tasks/limits.ts";
 import { buildVerifiedTaskPlan } from "../tasks/plan.ts";
 import { runVerifiedTask, type VerifiedTaskOptions } from "../tasks/runner.ts";
 
@@ -24,7 +25,12 @@ async function taskAction(
 ): Promise<void> {
 	if (!instruction) throw new Error("Provide a task instruction.");
 	if (!options.files) throw new Error("--files is required for a task run.");
-	const taskOptions = { files: options.files, model: options.model, json: options.json };
+	const taskOptions = {
+		files: options.files,
+		model: options.model,
+		json: options.json,
+		timeoutMinutes: options.timeoutMinutes,
+	};
 	const result = await runVerifiedTask(process.cwd(), instruction, taskOptions);
 	printTaskResult(result, options.json ?? false);
 	if (result.error) process.exitCode = 1;
@@ -121,8 +127,14 @@ export function createTaskCommand(): Command {
 		.argument("[instruction]", "Bounded coding task to perform")
 		.option("--files <paths>", "Allowed files, comma-separated; directories end with /")
 		.option("--model <name>", "Qualified installed Ollama model")
+		.option("--timeout <minutes>", "Stop an unresponsive task after 1 to 120 minutes", "30")
 		.option("--json", "Output the task result as JSON")
-		.action(taskAction);
+		.action(async (instruction, options) => {
+			await taskAction(instruction, {
+				...options,
+				timeoutMinutes: parseTaskTimeout(options.timeout as string | undefined),
+			});
+		});
 	command
 		.command("show")
 		.description("Inspect one verified file-task attempt")

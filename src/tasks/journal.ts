@@ -15,6 +15,7 @@ export interface TaskJournalEntry {
 	startedAt: string;
 	completedAt: string;
 	durationMs?: number;
+	timeoutMinutes?: number;
 	branch: string;
 	worktree?: string;
 	commit: string | null;
