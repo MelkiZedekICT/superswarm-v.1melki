@@ -1,9 +1,16 @@
-import { readdir, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const requiredFiles = ["LICENSE", "README.md", "src/index.ts", "ui/dist/index.html"];
+const requiredFiles = [
+	"LICENSE",
+	"README.md",
+	"src/index.ts",
+	"src/tasks/runner.ts",
+	"src/runtimes/local.ts",
+	"ui/dist/index.html",
+];
 
 const missing = [];
 for (const relativePath of requiredFiles) {
@@ -28,6 +35,12 @@ if (!assets.some((name) => name.endsWith(".js"))) {
 if (!assets.some((name) => name.endsWith(".css"))) {
 	missing.push("ui/dist/**/*.css");
 }
+
+const packageJson = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+if (packageJson.name !== "@melkizedekict/superswarm") missing.push("package.json#name");
+if (packageJson.bin?.superswarm !== "./src/index.ts") missing.push("package.json#bin.superswarm");
+if (packageJson.repository?.url !== "https://github.com/MelkiZedekICT/superswarm-v.1melki.git")
+	missing.push("package.json#repository.url");
 
 if (missing.length > 0) {
 	console.error("Superswarm package is incomplete. Build the UI before publishing.");
