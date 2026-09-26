@@ -16,8 +16,11 @@ jobs:
         with:
           bun-version: latest
 
-      - run: bun install
+      - run: bun install --frozen-lockfile
       - run: bun run build:ui
       - run: bun run lint
       - run: bun run typecheck
       - run: bun test
+      - run: node --test scripts/release-check.test.mjs
+      - run: bun run release:check
+      - run: npm pack --dry-run
