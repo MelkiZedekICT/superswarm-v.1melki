@@ -55,7 +55,7 @@ import { ConfigError, OverstoryError, WorktreeError } from "./errors.ts";
 import { jsonError } from "./json.ts";
 import { brand, chalk, muted, setQuiet } from "./logging/color.ts";
 
-export const VERSION = "0.1.0-alpha.5";
+export const VERSION = "0.1.0-alpha.6";
 
 const packageRoot = fileURLToPath(new URL("..", import.meta.url));
 process.env.PATH = [

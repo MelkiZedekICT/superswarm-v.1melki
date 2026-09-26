@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.6] - 2026-09-26
+
+### Fixed
+
+- Changed npm publishing from every `main` push to explicit version tags.
+- Corrected the registry check from the upstream Overstory package to
+  `@melkizedekict/superswarm` and made registry failures stop the release.
+- Removed duplicate tag creation from the publish job and made GitHub release
+  creation safe to rerun.
+- Added token verification and npm trusted-publisher support with provenance.
+
+### Changed
+
+- Corrected public package ownership while retaining upstream attribution.
+- Removed tests, fixtures, and source maps from the npm tarball.
+- Added release metadata validation to CI and the publishing workflow.
+
 ## [0.1.0-alpha.5] - 2026-09-25
 
 ### Added

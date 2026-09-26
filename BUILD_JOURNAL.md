@@ -1,5 +1,16 @@
 # Superswarm build journal
 
+## 26 September 2026 — npm release repair
+
+- Traced the failed GitHub job to the publish step; build, lint, typecheck, and
+  tests had succeeded.
+- Replaced the always-on publisher with a tag-only, idempotent release workflow.
+- Corrected package identity, exact registry version checks, authentication,
+  prerelease distribution tags, provenance, and GitHub release handling.
+- Added release policy and registry-probe tests, enforced dry packaging in CI,
+  and reduced the runtime tarball by excluding tests, fixtures, and source maps.
+- Prepared `0.1.0-alpha.6` as the first release through the repaired pipeline.
+
 ## 25 September 2026 — first operator-ready alpha
 
 - Added durable scope, digest, duration, timeout, worktree, quality, and error

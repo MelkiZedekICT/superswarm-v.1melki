@@ -10,6 +10,8 @@ Project: https://github.com/MelkiZedekICT/superswarm-v.1melki
 Current progress, release blockers, and the Jev integration research are recorded
 in [SUPERSWARM_PROGRESS_REPORT.md](SUPERSWARM_PROGRESS_REPORT.md). The latest
 verified build results are in [BUILD_STATUS.md](BUILD_STATUS.md).
+Maintainer release and npm authentication steps are in
+[PUBLISHING.md](PUBLISHING.md).
 
 The original MIT license and attribution are preserved. The upstream package
 identity, `ov`/`overstory` commands, and `.overstory` configuration remain for
