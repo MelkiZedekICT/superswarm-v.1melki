@@ -2,100 +2,122 @@ name: Publish to npm
 
 on:
   push:
-    branches: [main]
+    tags:
+      - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to publish, such as v0.1.0-alpha.6
+        required: true
+        type: string
+
+concurrency:
+  group: npm-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
+          package-manager-cache: false
 
-      - run: bun install
-      - run: bun run build:ui
-      - run: bun run lint
-      - run: bun run typecheck
-      - run: bun test
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
 
-      - name: Check if version changed
-        id: version-check
+      - name: Validate source and package
         run: |
-          LOCAL_VERSION=$(node -p "require('./package.json').version")
-          NPM_VERSION=$(npm view @os-eco/overstory-cli version 2>/dev/null || echo "0.0.0")
-          if [ "$LOCAL_VERSION" = "$NPM_VERSION" ]; then
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-            echo "Version $LOCAL_VERSION already published, skipping."
+          bun run build:ui
+          bun run lint
+          bun run typecheck
+          bun test
+          node --test scripts/release-check.test.mjs scripts/npm-version-status.test.mjs
+          node scripts/release-check.mjs --tag "$RELEASE_TAG"
+          npm pack --dry-run
+
+      - name: Read release metadata
+        id: metadata
+        shell: bash
+        run: |
+          PACKAGE=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *-* ]]; then
+            DIST_TAG=next
           else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-            echo "version=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
-            echo "Publishing $LOCAL_VERSION (npm has $NPM_VERSION)."
+            DIST_TAG=latest
           fi
+          echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dist-tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Verify version sync
-        if: steps.version-check.outputs.publish == 'true'
-        run: |
-          PKG_VERSION="${{ steps.version-check.outputs.version }}"
-          SRC_VERSION=$(grep -oP 'const VERSION = "\K[^"]+' src/index.ts)
-          if [ "$PKG_VERSION" != "$SRC_VERSION" ]; then
-            echo "::error::Version mismatch! package.json=$PKG_VERSION src/index.ts=$SRC_VERSION"
-            exit 1
-          fi
+      - name: Check npm registry
+        id: registry
+        run: >-
+          node scripts/npm-version-status.mjs
+          --package "${{ steps.metadata.outputs.package }}"
+          --version "${{ steps.metadata.outputs.version }}"
 
-      - name: Publish to npm
-        if: steps.version-check.outputs.publish == 'true'
+      - name: Configure npm authentication
+        if: steps.registry.outputs.published != 'true'
+        shell: bash
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          npm publish --access public
-
-      - name: Tag release
-        if: steps.version-check.outputs.publish == 'true'
-        run: |
-          VERSION="${{ steps.version-check.outputs.version }}"
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
-
-      - name: Extract changelog notes
-        if: steps.version-check.outputs.publish == 'true'
-        id: changelog
-        run: |
-          VERSION="${{ steps.version-check.outputs.version }}"
-          # Extract the section for this version (between its heading and the next ## heading)
-          NOTES=$(awk '/^## \['"$VERSION"'\]/{found=1; next} found && /^## \[/{exit} found{print}' CHANGELOG.md)
-          # Trim leading/trailing blank lines
-          NOTES=$(echo "$NOTES" | awk 'NF{found=1} found{lines[++n]=$0} END{while(n>0 && lines[n]=="") n--; for(i=1;i<=n;i++) print lines[i]}')
-          if [ -n "$NOTES" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            # Write to a temp file to avoid shell escaping issues
-            echo "$NOTES" > /tmp/release-notes.md
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            NPMRC="$RUNNER_TEMP/superswarm.npmrc"
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$NPMRC"
+            echo "NPM_CONFIG_USERCONFIG=$NPMRC" >> "$GITHUB_ENV"
+            npm whoami
           else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "Warning: No CHANGELOG entry found for $VERSION"
+            echo "NPM_TOKEN is not set; npm trusted publishing will be used."
+          fi
+
+      - name: Publish package
+        if: steps.registry.outputs.published != 'true'
+        run: >-
+          npm publish
+          --access public
+          --provenance
+          --tag "${{ steps.metadata.outputs.dist-tag }}"
+
+      - name: Extract release notes
+        id: notes
+        shell: bash
+        run: |
+          VERSION="${{ steps.metadata.outputs.version }}"
+          awk '/^## \['"$VERSION"'\]/{found=1; next} found && /^## \[/{exit} found{print}' \
+            CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+          if [ ! -s "$RUNNER_TEMP/release-notes.md" ]; then
+            echo "No release notes found for $VERSION" >&2
+            exit 1
           fi
 
       - name: Create GitHub release
-        if: steps.version-check.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          VERSION="${{ steps.version-check.outputs.version }}"
-          if [ "${{ steps.changelog.outputs.found }}" = "true" ]; then
-            gh release create "v$VERSION" \
-              --title "v$VERSION" \
-              --notes-file /tmp/release-notes.md
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "GitHub release $RELEASE_TAG already exists."
           else
-            gh release create "v$VERSION" \
-              --title "v$VERSION" \
-              --generate-notes
+            gh release create "$RELEASE_TAG" \
+              --verify-tag \
+              --title "$RELEASE_TAG" \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
           fi
