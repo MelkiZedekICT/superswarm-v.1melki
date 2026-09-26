@@ -1,10 +1,10 @@
 {
 	"name": "@melkizedekict/superswarm",
 	"version": "0.1.0-alpha.5",
-	"description": "Superswarm — multi-agent coding orchestration based on Overstory by Jaymin West.",
-	"author": "Jaymin West",
+	"description": "Local-first multi-agent coding orchestration, based on Overstory.",
+	"author": "MelkiZedekICT <melkizedek2006@gmail.com>",
 	"contributors": [
-		"MelkiZedekICT"
+		"Jaymin West (original Overstory author)"
 	],
 	"license": "MIT",
 	"type": "module",
@@ -13,12 +13,17 @@
 		"url": "https://github.com/MelkiZedekICT/superswarm-v.1melki.git"
 	},
 	"homepage": "https://github.com/MelkiZedekICT/superswarm-v.1melki",
+	"bugs": {
+		"url": "https://github.com/MelkiZedekICT/superswarm-v.1melki/issues"
+	},
 	"keywords": [
 		"ai",
 		"agents",
 		"orchestration",
 		"claude-code",
 		"multi-agent",
+		"local-first",
+		"ollama",
 		"swarm",
 		"cli",
 		"developer-tools"
