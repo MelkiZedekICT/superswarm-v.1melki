@@ -55,7 +55,8 @@
 		"version:bump": "bun scripts/version-bump.ts",
 		"build:ui": "cd ui && bun install && bun run build",
 		"prepack": "node scripts/verify-package.mjs",
-		"release:check": "node scripts/release-check.mjs"
+		"release:check": "node scripts/release-check.mjs",
+		"release:status": "node scripts/npm-version-status.mjs"
 	},
 	"dependencies": {
 		"@earendil-works/pi-coding-agent": "0.85.1",
