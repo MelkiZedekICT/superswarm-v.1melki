@@ -6,13 +6,22 @@ release.
 
 ## npm authentication
 
+For the first publish, the package must first be created on npm. Add a GitHub
+Actions secret named `NPM_TOKEN` with a granular npm token that has package
+write access. The workflow stops before `npm publish` and explains this when
+the package does not exist and no token is configured.
+
+After the package exists, either keep using that token or configure npm trusted
+publishing for GitHub repository `MelkiZedekICT/superswarm-v.1melki` and workflow
+`publish.yml`. Trusted publishing can replace the token after the initial
+publication.
+
 Use one of these repository configurations:
 
-1. Add a GitHub Actions secret named `NPM_TOKEN` containing a granular npm
-   token with read/write access to `@melkizedekict/superswarm`.
-2. Configure npm trusted publishing for GitHub repository
-   `MelkiZedekICT/superswarm-v.1melki` and workflow `publish.yml`. The workflow
-   already grants `id-token: write` and uses Node 24.
+1. Keep the `NPM_TOKEN` secret containing a granular npm token with package
+   write access to `@melkizedekict/superswarm`.
+2. Configure npm trusted publishing for the GitHub repository and workflow
+   `publish.yml`. The workflow already grants `id-token: write` and uses Node 24.
 
 The token path runs `npm whoami` before publishing. A missing token falls back
 to trusted publishing. Authentication values are never written into the

@@ -8,13 +8,15 @@ export async function npmVersionStatus(packageName, version, fetcher = fetch) {
 		headers: { Accept: "application/vnd.npm.install-v1+json" },
 		signal: AbortSignal.timeout(10_000),
 	});
-	if (response.status === 404) return { packageName, version, published: false };
+	if (response.status === 404)
+		return { packageName, version, packageExists: false, published: false };
 	if (!response.ok)
 		throw new Error(`npm registry returned ${response.status} ${response.statusText}.`);
 	const metadata = await response.json();
 	return {
 		packageName,
 		version,
+		packageExists: true,
 		published: Object.hasOwn(metadata.versions ?? {}, version),
 	};
 }
@@ -32,7 +34,7 @@ async function main() {
 	if (process.env.GITHUB_OUTPUT)
 		await appendFile(
 			process.env.GITHUB_OUTPUT,
-			`published=${result.published}\npackage=${result.packageName}\nversion=${result.version}\n`,
+			`published=${result.published}\npackage-exists=${result.packageExists}\npackage=${result.packageName}\nversion=${result.version}\n`,
 		);
 	console.log(JSON.stringify(result));
 }

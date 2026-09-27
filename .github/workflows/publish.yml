@@ -78,14 +78,18 @@ jobs:
         shell: bash
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          PACKAGE_EXISTS: ${{ steps.registry.outputs.package-exists }}
         run: |
           if [ -n "${NPM_TOKEN:-}" ]; then
             NPMRC="$RUNNER_TEMP/superswarm.npmrc"
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$NPMRC"
             echo "NPM_CONFIG_USERCONFIG=$NPMRC" >> "$GITHUB_ENV"
             npm whoami
+          elif [ "${PACKAGE_EXISTS:-false}" != "true" ]; then
+            echo "::error title=Initial npm publish needs a token::@melkizedekict/superswarm does not exist on npm yet. Add a granular npm token with package write access as the GitHub Actions secret NPM_TOKEN, then rerun this tag workflow. After the first publish, configure npm trusted publishing for MelkiZedekICT/superswarm-v.1melki and publish.yml."
+            exit 1
           else
-            echo "NPM_TOKEN is not set; npm trusted publishing will be used."
+            echo "NPM_TOKEN is not set; npm trusted publishing will be used for the existing package."
           fi
 
       - name: Publish package

@@ -7,6 +7,7 @@ test("finds an exact published version", async () => {
 		Response.json({ versions: { "1.2.3": {} } }),
 	);
 	assert.equal(result.published, true);
+	assert.equal(result.packageExists, true);
 });
 
 test("reports a missing version without treating it as an error", async () => {
@@ -14,6 +15,7 @@ test("reports a missing version without treating it as an error", async () => {
 		Response.json({ versions: { "1.2.3": {} } }),
 	);
 	assert.equal(result.published, false);
+	assert.equal(result.packageExists, true);
 });
 
 test("reports an unpublished package from registry 404", async () => {
@@ -23,6 +25,7 @@ test("reports an unpublished package from registry 404", async () => {
 		async () => new Response(null, { status: 404 }),
 	);
 	assert.equal(result.published, false);
+	assert.equal(result.packageExists, false);
 });
 
 test("fails closed on registry outages", async () => {
