@@ -1,7 +1,7 @@
 import { apiError, apiJson } from "../../../json.ts";
 import { registerApiHandler } from "../../serve.ts";
+import { resolveRepoPath, runGit, runGitChecked } from "./process.ts";
 import { getGitSnapshot } from "./repository.ts";
-import { runGitChecked } from "./process.ts";
 
 async function readHistory(projectRoot: string) {
 	const output = await runGitChecked(projectRoot, [
@@ -58,6 +58,40 @@ export function registerGitApi(projectRoot: string): void {
 				return apiJson(await readBranches(projectRoot));
 			} catch (error) {
 				return apiError(error instanceof Error ? error.message : "Could not read Git branches.", 400);
+			}
+		}
+		if (req.method === "GET" && pathname === "/api/git/diff") {
+			try {
+				const url = new URL(req.url);
+				const path = resolveRepoPath(projectRoot, url.searchParams.get("path") ?? "");
+				const staged = url.searchParams.get("staged") === "true";
+				const snapshot = await getGitSnapshot(projectRoot);
+				const change = snapshot.changes.find((item) => item.path === path);
+				if (!change) return apiError("File has no uncommitted changes.", 404);
+				const args = change.kind === "untracked" && !staged
+					? ["diff", "--no-index", "--no-ext-diff", "--no-textconv", "--unified=3", "--", "/dev/null", path]
+					: [
+							"--literal-pathspecs",
+							"diff",
+							"--no-ext-diff",
+							"--no-textconv",
+							"--unified=3",
+							...(staged ? ["--cached"] : []),
+							"--",
+							path,
+						];
+				const result = await runGit(projectRoot, args);
+				if (result.exitCode !== 0 && !(change.kind === "untracked" && result.exitCode === 1))
+					return apiError(result.stderr.trim() || "Could not read the file diff.", 400);
+				const maxChars = 120_000;
+				return apiJson({
+					path,
+					staged,
+					diff: result.stdout.slice(0, maxChars),
+					truncated: result.stdout.length > maxChars,
+				});
+			} catch (error) {
+				return apiError(error instanceof Error ? error.message : "Could not read the file diff.", 400);
 			}
 		}
 		return null;
