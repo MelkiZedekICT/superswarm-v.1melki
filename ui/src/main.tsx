@@ -11,6 +11,7 @@ import { WsStatusProvider } from "@/lib/ws-status";
 import { AgentDetail } from "@/routes/AgentDetail";
 import { ConsolePage } from "@/routes/coordinator/ConsolePage";
 import { Home } from "@/routes/Home";
+import { GitPage } from "@/routes/git/GitPage";
 import { Mail } from "@/routes/Mail";
 
 import "./index.css";
@@ -39,6 +40,7 @@ createRoot(rootEl).render(
 									<Route path="/agents/:name" element={<AgentDetail />} />
 									<Route path="coordinator" element={<ConsolePage />} />
 									<Route path="mail" element={<Mail />} />
+									<Route path="git" element={<GitPage />} />
 									<Route
 										path="*"
 										element={

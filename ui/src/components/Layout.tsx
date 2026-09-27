@@ -55,6 +55,7 @@ function TopBar() {
 					<NavItem to="/coordinator" label="Coordinator" />
 					<NavItem to="/" label="Fleet" end />
 					<NavItem to="/mail" label="Mail" />
+					<NavItem to="/git" label="Git" />
 				</nav>
 				<div className="flex-1" />
 				<RunPicker runs={runs} selectedRunId={selectedRunId} onSelect={setSelectedRunId} />
