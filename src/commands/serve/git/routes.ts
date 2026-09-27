@@ -3,6 +3,7 @@ import { registerApiHandler } from "../../serve.ts";
 import { resolveRepoPath, runGit, runGitChecked } from "./process.ts";
 import { getGitSnapshot } from "./repository.ts";
 import { commitStaged, stageChange, unstageChange } from "./mutations.ts";
+import { switchBranch, syncRepository } from "./branches.ts";
 
 async function requestBody(req: Request): Promise<Record<string, unknown>> {
 	let body: unknown;
@@ -129,6 +130,22 @@ export function registerGitApi(projectRoot: string): void {
 				return apiJson(await commitStaged(projectRoot, body.message));
 			} catch (error) {
 				return apiError(error instanceof Error ? error.message : "Could not commit staged files.", 400);
+			}
+		}
+		if (req.method === "POST" && pathname === "/api/git/branch") {
+			try {
+				const body = await requestBody(req);
+				return apiJson(await switchBranch(projectRoot, body.name, body.create === true));
+			} catch (error) {
+				return apiError(error instanceof Error ? error.message : "Could not change branches.", 400);
+			}
+		}
+		const syncMatch = pathname.match(/^\/api\/git\/(fetch|pull|push)$/);
+		if (req.method === "POST" && syncMatch) {
+			try {
+				return apiJson(await syncRepository(projectRoot, syncMatch[1] as "fetch" | "pull" | "push"));
+			} catch (error) {
+				return apiError(error instanceof Error ? error.message : "Git remote operation failed.", 400);
 			}
 		}
 		return null;
