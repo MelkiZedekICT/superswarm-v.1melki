@@ -33,6 +33,7 @@ import { hasNudge } from "../runtimes/headless-connection.ts";
 import { openSessionStore } from "../sessions/compat.ts";
 import type { AgentManifest, OverstoryConfig } from "../types.ts";
 import { ensureUiBuild } from "./serve/build.ts";
+import { registerGitApi } from "./serve/git/routes.ts";
 import { type DevServerHandle, startDevServer } from "./serve/dev.ts";
 import { type RestApiDeps, registerRestApi } from "./serve/rest.ts";
 import { serveStatic } from "./serve/static.ts";
@@ -171,6 +172,7 @@ export async function createServeServer(
 	// Register REST handlers before Bun.serve() — skip only for test isolation
 	if (deps._restDeps !== false) {
 		registerRestApi({ _projectRoot: config.project.root, ...(deps._restDeps ?? {}) });
+		registerGitApi(config.project.root);
 	}
 
 	const server = Bun.serve({
