@@ -98,6 +98,7 @@ export function CommandPalette({ children }: { children?: ReactNode }) {
 						</CommandItem>
 						<CommandItem onSelect={() => select(() => navigate("/"))}>Go to Fleet</CommandItem>
 						<CommandItem onSelect={() => select(() => navigate("/mail"))}>Go to Mail</CommandItem>
+						<CommandItem onSelect={() => select(() => navigate("/git"))}>Go to Git</CommandItem>
 					</CommandGroup>
 					{runItems.length > 0 && (
 						<>

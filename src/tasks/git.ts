@@ -1,20 +1,6 @@
+import { runGit } from "../git/process.ts";
+
 const INTERNAL_TASK_PATH = ".superswarm/";
-
-export interface GitResult {
-	exitCode: number;
-	stdout: string;
-	stderr: string;
-}
-
-export async function runGit(cwd: string, args: string[]): Promise<GitResult> {
-	const child = Bun.spawn(["git", ...args], { cwd, stdout: "pipe", stderr: "pipe" });
-	const [exitCode, stdout, stderr] = await Promise.all([
-		child.exited,
-		new Response(child.stdout).text(),
-		new Response(child.stderr).text(),
-	]);
-	return { exitCode, stdout, stderr };
-}
 
 export async function currentBranch(cwd: string): Promise<string> {
 	const result = await runGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]);

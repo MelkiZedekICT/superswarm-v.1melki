@@ -49,14 +49,26 @@ function parsePorcelain(output: string): GitFileChange[] {
 		});
 		// Porcelain v1 -z emits a second NUL field containing the old path for
 		// renames and copies. Keep the destination as the actionable path.
-		if (indexStatus === "R" || indexStatus === "C" || worktreeStatus === "R" || worktreeStatus === "C")
+		if (
+			indexStatus === "R" ||
+			indexStatus === "C" ||
+			worktreeStatus === "R" ||
+			worktreeStatus === "C"
+		)
 			index += 1;
 	}
 	return changes.sort((a, b) => a.path.localeCompare(b.path));
 }
 
-async function upstreamState(cwd: string): Promise<{ upstream: string | null; ahead: number; behind: number }> {
-	const upstream = await runGit(cwd, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"]);
+async function upstreamState(
+	cwd: string,
+): Promise<{ upstream: string | null; ahead: number; behind: number }> {
+	const upstream = await runGit(cwd, [
+		"rev-parse",
+		"--abbrev-ref",
+		"--symbolic-full-name",
+		"@{upstream}",
+	]);
 	if (upstream.exitCode !== 0) return { upstream: null, ahead: 0, behind: 0 };
 	const counts = await runGit(cwd, ["rev-list", "--left-right", "--count", "HEAD...@{upstream}"]);
 	if (counts.exitCode !== 0) return { upstream: upstream.stdout.trim(), ahead: 0, behind: 0 };
@@ -81,7 +93,9 @@ export async function getGitSnapshot(cwd: string): Promise<GitSnapshot> {
 	const detached = branchResult.exitCode !== 0;
 	return {
 		root,
-		branch: detached ? `detached at ${(headResult.stdout.trim() || "unknown")}` : branchResult.stdout.trim(),
+		branch: detached
+			? `detached at ${headResult.stdout.trim() || "unknown"}`
+			: branchResult.stdout.trim(),
 		detached,
 		...tracking,
 		changes: parsePorcelain(statusResult.stdout),

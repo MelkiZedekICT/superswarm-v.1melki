@@ -22,12 +22,12 @@ async function readHistory(projectRoot: string) {
 		"log",
 		"-n",
 		"40",
-		"--format=%H%x00%h%x00%s%x00%an%x00%aI%x00",
+		"--format=%x1e%H%x00%h%x00%s%x00%an%x00%aI",
 	]);
-	const fields = output.split("\0");
 	const commits = [];
-	for (let index = 0; index + 4 < fields.length; index += 5) {
-		const [hash, shortHash, subject, author, committedAt] = fields.slice(index, index + 5);
+	for (const record of output.split("\x1e")) {
+		const [hash, shortHash, subject, author, rawCommittedAt] = record.trim().split("\0");
+		const committedAt = rawCommittedAt?.trim();
 		if (hash && shortHash && subject !== undefined && author !== undefined && committedAt)
 			commits.push({ hash, shortHash, subject, author, committedAt });
 	}
@@ -64,14 +64,20 @@ export function registerGitApi(projectRoot: string): void {
 			try {
 				return apiJson(await readHistory(projectRoot));
 			} catch (error) {
-				return apiError(error instanceof Error ? error.message : "Could not read Git history.", 400);
+				return apiError(
+					error instanceof Error ? error.message : "Could not read Git history.",
+					400,
+				);
 			}
 		}
 		if (req.method === "GET" && pathname === "/api/git/branches") {
 			try {
 				return apiJson(await readBranches(projectRoot));
 			} catch (error) {
-				return apiError(error instanceof Error ? error.message : "Could not read Git branches.", 400);
+				return apiError(
+					error instanceof Error ? error.message : "Could not read Git branches.",
+					400,
+				);
 			}
 		}
 		if (req.method === "GET" && pathname === "/api/git/diff") {
@@ -82,18 +88,28 @@ export function registerGitApi(projectRoot: string): void {
 				const snapshot = await getGitSnapshot(projectRoot);
 				const change = snapshot.changes.find((item) => item.path === path);
 				if (!change) return apiError("File has no uncommitted changes.", 404);
-				const args = change.kind === "untracked" && !staged
-					? ["diff", "--no-index", "--no-ext-diff", "--no-textconv", "--unified=3", "--", "/dev/null", path]
-					: [
-							"--literal-pathspecs",
-							"diff",
-							"--no-ext-diff",
-							"--no-textconv",
-							"--unified=3",
-							...(staged ? ["--cached"] : []),
-							"--",
-							path,
-						];
+				const args =
+					change.kind === "untracked" && !staged
+						? [
+								"diff",
+								"--no-index",
+								"--no-ext-diff",
+								"--no-textconv",
+								"--unified=3",
+								"--",
+								"/dev/null",
+								path,
+							]
+						: [
+								"--literal-pathspecs",
+								"diff",
+								"--no-ext-diff",
+								"--no-textconv",
+								"--unified=3",
+								...(staged ? ["--cached"] : []),
+								"--",
+								path,
+							];
 				const result = await runGit(projectRoot, args);
 				if (result.exitCode !== 0 && !(change.kind === "untracked" && result.exitCode === 1))
 					return apiError(result.stderr.trim() || "Could not read the file diff.", 400);
@@ -105,7 +121,10 @@ export function registerGitApi(projectRoot: string): void {
 					truncated: result.stdout.length > maxChars,
 				});
 			} catch (error) {
-				return apiError(error instanceof Error ? error.message : "Could not read the file diff.", 400);
+				return apiError(
+					error instanceof Error ? error.message : "Could not read the file diff.",
+					400,
+				);
 			}
 		}
 		if (req.method === "POST" && pathname === "/api/git/stage") {
@@ -121,7 +140,10 @@ export function registerGitApi(projectRoot: string): void {
 				const body = await requestBody(req);
 				return apiJson(await unstageChange(projectRoot, String(body.path ?? "")));
 			} catch (error) {
-				return apiError(error instanceof Error ? error.message : "Could not unstage the file.", 400);
+				return apiError(
+					error instanceof Error ? error.message : "Could not unstage the file.",
+					400,
+				);
 			}
 		}
 		if (req.method === "POST" && pathname === "/api/git/commit") {
@@ -129,7 +151,10 @@ export function registerGitApi(projectRoot: string): void {
 				const body = await requestBody(req);
 				return apiJson(await commitStaged(projectRoot, body.message));
 			} catch (error) {
-				return apiError(error instanceof Error ? error.message : "Could not commit staged files.", 400);
+				return apiError(
+					error instanceof Error ? error.message : "Could not commit staged files.",
+					400,
+				);
 			}
 		}
 		if (req.method === "POST" && pathname === "/api/git/branch") {
@@ -143,9 +168,14 @@ export function registerGitApi(projectRoot: string): void {
 		const syncMatch = pathname.match(/^\/api\/git\/(fetch|pull|push)$/);
 		if (req.method === "POST" && syncMatch) {
 			try {
-				return apiJson(await syncRepository(projectRoot, syncMatch[1] as "fetch" | "pull" | "push"));
+				return apiJson(
+					await syncRepository(projectRoot, syncMatch[1] as "fetch" | "pull" | "push"),
+				);
 			} catch (error) {
-				return apiError(error instanceof Error ? error.message : "Git remote operation failed.", 400);
+				return apiError(
+					error instanceof Error ? error.message : "Git remote operation failed.",
+					400,
+				);
 			}
 		}
 		return null;

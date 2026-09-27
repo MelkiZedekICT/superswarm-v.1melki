@@ -18,6 +18,8 @@ identity, `ov`/`overstory` commands, and `.overstory` configuration remain for
 compatibility; `superswarm` is also available as a command when linked/installed
 from this checkout. The documentation below describes the upstream baseline.
 
+For current Superswarm usage and project notes, see the [documentation map](docs/README.md).
+
 Multi-agent orchestration for AI coding agents.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -63,6 +65,9 @@ and local-mode projects reject cloud runtime overrides. See
 Direct tasks run in isolated branches, rerun the configured quality gates, and
 write evidence to `.overstory/task-journal.jsonl`. See [BUILD_JOURNAL.md](BUILD_JOURNAL.md).
 Use `superswarm task history --json` when another tool needs the structured task record.
+The local console's **Git** page reviews diffs, stages files, commits staged
+changes, manages local branches, and syncs with an existing upstream. See the
+[Git workspace guide](docs/developer/git-workspace.md) for its safety rules.
 See [LAUNCH.md](LAUNCH.md) for release acceptance, task recovery, and the exact
 boundary of the local-model alpha.
 

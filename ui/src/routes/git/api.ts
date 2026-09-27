@@ -59,5 +59,4 @@ export const commitGitFiles = (message: string) =>
 	post<{ hash: string; message: string; snapshot: GitSnapshot }>("commit", { message });
 export const changeGitBranch = (name: string, create: boolean) =>
 	post<GitSnapshot>("branch", { name, create });
-export const syncGitRemote = (operation: "fetch" | "pull" | "push") =>
-	post<GitSnapshot>(operation);
+export const syncGitRemote = (operation: "fetch" | "pull" | "push") => post<GitSnapshot>(operation);
