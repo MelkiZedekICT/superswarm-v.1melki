@@ -2,6 +2,19 @@ import { apiError, apiJson } from "../../../json.ts";
 import { registerApiHandler } from "../../serve.ts";
 import { resolveRepoPath, runGit, runGitChecked } from "./process.ts";
 import { getGitSnapshot } from "./repository.ts";
+import { commitStaged, stageChange, unstageChange } from "./mutations.ts";
+
+async function requestBody(req: Request): Promise<Record<string, unknown>> {
+	let body: unknown;
+	try {
+		body = await req.json();
+	} catch {
+		throw new Error("Request body must be valid JSON.");
+	}
+	if (body === null || typeof body !== "object" || Array.isArray(body))
+		throw new Error("Request body must be a JSON object.");
+	return body as Record<string, unknown>;
+}
 
 async function readHistory(projectRoot: string) {
 	const output = await runGitChecked(projectRoot, [
@@ -92,6 +105,30 @@ export function registerGitApi(projectRoot: string): void {
 				});
 			} catch (error) {
 				return apiError(error instanceof Error ? error.message : "Could not read the file diff.", 400);
+			}
+		}
+		if (req.method === "POST" && pathname === "/api/git/stage") {
+			try {
+				const body = await requestBody(req);
+				return apiJson(await stageChange(projectRoot, String(body.path ?? "")));
+			} catch (error) {
+				return apiError(error instanceof Error ? error.message : "Could not stage the file.", 400);
+			}
+		}
+		if (req.method === "POST" && pathname === "/api/git/unstage") {
+			try {
+				const body = await requestBody(req);
+				return apiJson(await unstageChange(projectRoot, String(body.path ?? "")));
+			} catch (error) {
+				return apiError(error instanceof Error ? error.message : "Could not unstage the file.", 400);
+			}
+		}
+		if (req.method === "POST" && pathname === "/api/git/commit") {
+			try {
+				const body = await requestBody(req);
+				return apiJson(await commitStaged(projectRoot, body.message));
+			} catch (error) {
+				return apiError(error instanceof Error ? error.message : "Could not commit staged files.", 400);
 			}
 		}
 		return null;
